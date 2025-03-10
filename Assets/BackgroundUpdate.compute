@@ -1,0 +1,188 @@
+#pragma kernel UpdateBackground
+#pragma kernel ApplyBackground
+#pragma kernel UpdateFullBackground
+
+// Input textures
+Texture2D<float4> InputTexture; // Current webcam frame
+Texture2D<float4> SegmentationMask; // Segmentation mask
+RWTexture2D<float4> BackgroundModel; // Dynamic background model
+RWTexture2D<float4> OutputTexture; // Final output texture
+
+// Parameters
+float4x4 _TransformMatrix; // Transform matrix from webcam to segmentation
+float _SegmentationThreshold; // Threshold for segmentation mask
+float _LearningRate; // Base rate at which background updates (0-1)
+float _FarDistanceFactor; // Multiplier for areas far from human
+float4 _FallbackColor; // Fallback color for areas with no background
+
+// Utility function to determine if a pixel is part of the human
+bool IsHuman(uint2 pixelCoord)
+{
+    // Get dimensions properly
+    uint width, height;
+    InputTexture.GetDimensions(width, height);
+    
+    // Convert from webcam coordinates to segmentation coordinates
+    float2 uv = float2(pixelCoord.x, pixelCoord.y) / float2(width, height);
+    float4 transformedUV = mul(_TransformMatrix, float4(uv, 0, 1));
+    float2 segUV = transformedUV.xy;
+    
+    // Check if within valid 0-1 range for segmentation texture
+    if (segUV.x < 0.0 || segUV.x > 1.0 || segUV.y < 0.0 || segUV.y > 1.0)
+        return false;
+    
+    // Sample the segmentation mask
+    uint segWidth, segHeight;
+    SegmentationMask.GetDimensions(segWidth, segHeight);
+    uint2 segCoord = uint2(segUV.x * segWidth, segUV.y * segHeight);
+    float maskValue = SegmentationMask[segCoord].r;
+    
+    // Return true if above threshold (is human)
+    return maskValue > _SegmentationThreshold;
+}
+
+// UpdateBackground kernel: Updates the background model in areas not occupied by a human
+[numthreads(8, 8, 1)]
+void UpdateBackground(uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    InputTexture.GetDimensions(width, height);
+    
+    // Skip if outside texture bounds
+    if (id.x >= width || id.y >= height)
+        return;
+    
+    // Calculate distance from human silhouette
+    float distanceFromHuman = 1.0;
+    float searchRadius = 0.03; // How far to search for human pixels
+    
+    // First check if this pixel itself is human
+    if (IsHuman(id.xy))
+    {
+        // Don't update background for human pixels
+        return;
+    }
+    
+    // Search for nearby human pixels to calculate distance
+    uint searchSteps = 10; // Number of steps to check for distance calculation
+    float minDistance = 1.0;
+    
+    // Check in a circular pattern around the current pixel
+    for (uint step = 1; step <= searchSteps; step++)
+    {
+        float normalizedStep = float(step) / float(searchSteps);
+        float radius = searchRadius * normalizedStep;
+        
+        // Check 8 directions for each radius step
+        for (uint dir = 0; dir < 8; dir++)
+        {
+            float angle = dir * 3.14159 * 0.25;
+            int2 offset = int2(radius * cos(angle) * width, radius * sin(angle) * height);
+            
+            // Ensure offset coordinates are within bounds
+            uint2 checkCoord = uint2(
+                clamp(int(id.x) + offset.x, 0, int(width) - 1),
+                clamp(int(id.y) + offset.y, 0, int(height) - 1)
+            );
+            
+            if (IsHuman(checkCoord))
+            {
+                // Found human pixel - calculate normalized distance
+                minDistance = min(minDistance, normalizedStep);
+                break;
+            }
+        }
+        
+        // If we already found a close human pixel, no need to check further
+        if (minDistance < 1.0)
+            break;
+    }
+    
+    distanceFromHuman = minDistance;
+    
+    // Adjust learning rate based on distance from human
+    // Far from human (distanceFromHuman = 1.0): fast update (use full _LearningRate)
+    // Close to human (distanceFromHuman near 0): very slow update
+    float adjustedLearningRate = _LearningRate * pow(distanceFromHuman, 0.5);
+    
+    // Extra boost for far away pixels
+    if (distanceFromHuman > 0.8)
+        adjustedLearningRate = _LearningRate * _FarDistanceFactor; // Much faster for distant pixels
+    
+    // Update the background model with adjusted learning rate
+    float4 currentBg = BackgroundModel[id.xy];
+    float4 newFrame = InputTexture[id.xy];
+    
+    // Ensure alpha is 1.0
+    newFrame.a = 1.0;
+    
+    // Linear interpolation for smooth background update
+    BackgroundModel[id.xy] = lerp(currentBg, newFrame, adjustedLearningRate);
+}
+
+// ApplyBackground kernel: Replaces human pixels with background model
+[numthreads(8, 8, 1)]
+void ApplyBackground(uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    InputTexture.GetDimensions(width, height);
+    
+    // Skip if outside texture bounds
+    if (id.x >= width || id.y >= height)
+        return;
+    
+    // Sample the current input frame pixel
+    float4 inputPixel = InputTexture[id.xy];
+    inputPixel.a = 1.0; // Ensure alpha is 1.0
+    
+    // Check if this pixel is part of the human
+    bool isHuman = IsHuman(id.xy);
+    
+    // If not human, just copy the current frame
+    if (!isHuman)
+    {
+        OutputTexture[id.xy] = inputPixel;
+        return;
+    }
+    
+    // For human pixels, use the background model
+    float4 bgPixel = BackgroundModel[id.xy];
+    
+    // Make sure alpha is 1.0
+    bgPixel.a = 1.0;
+    
+    // If background is very dark/transparent (not yet populated),
+    // use the fallback color
+    float luminance = dot(bgPixel.rgb, float3(0.2126, 0.7152, 0.0722));
+    if (luminance < 0.01)
+    {
+        OutputTexture[id.xy] = _FallbackColor;
+    }
+    else
+    {
+        OutputTexture[id.xy] = bgPixel;
+    }
+}
+
+// UpdateFullBackground kernel: Updates the entire background model
+[numthreads(8, 8, 1)]
+void UpdateFullBackground(uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    InputTexture.GetDimensions(width, height);
+    
+    // Skip if outside texture bounds
+    if (id.x >= width || id.y >= height)
+        return;
+    
+    // Update the entire background model with current frame
+    float4 currentBg = BackgroundModel[id.xy];
+    float4 newFrame = InputTexture[id.xy];
+    
+    // Ensure alpha is 1.0
+    newFrame.a = 1.0;
+    
+    // Linear interpolation for smooth background update
+    // This can use a faster learning rate since we know there's no human
+    BackgroundModel[id.xy] = lerp(currentBg, newFrame, _LearningRate);
+}

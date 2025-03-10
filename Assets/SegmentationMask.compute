@@ -1,0 +1,25 @@
+// SegmentationMask.compute
+#pragma kernel CSMain
+
+// The output RenderTexture where the segmentation mask will be written.
+RWTexture2D<float4> Result;
+// A structured buffer containing segmentation probabilities (one float per pixel)
+StructuredBuffer<float> segData;
+
+// Width and height of the segmentation image.
+int _Width;
+int _Height;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _Width || id.y >= _Height)
+        return;
+
+    // Compute the index (assumes NHWC with shape [1, _Height, _Width, 1])
+    int index = id.y * _Width + id.x;
+    // Get segmentation probability (assumed to be in [0,1])
+    float prob = segData[index];
+    // Write grayscale color (alpha 1)
+    Result[int2(id.x, _Height -1 -id.y)] = float4(prob, prob, prob, 1.0);
+}
