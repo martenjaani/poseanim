@@ -1,208 +1,194 @@
 using NativeWebSocket;
-using System;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using UnityEngine;
 
 public class KeypointReceiver : MonoBehaviour
 {
-    // WebSocket configuration
+    public GameObject spherePrefab;
+    private List<GameObject> jointSpheres = new List<GameObject>();
     private WebSocket websocket;
-    private string serverUrl = "ws://127.0.0.1:8765";
-
-    // Rendering configuration
-    [Header("Rendering")]
-    public Mesh sphereMesh;
-    public Material sphereMaterial;
-    public float sphereSize = 0.05f;
-    public Color sphereColor = Color.blue;
-
-    // Coordinate transformation
-    [Header("Transform")]
     public float scaleFactor = 1.0f;
     public Vector3 offset = new Vector3(0f, 0f, 5f);
-
-    // Debug
-    [Header("Debug")]
-    public bool showDebugInfo = true;
-
-    // Keypoint data
     private const int NUM_JOINTS = 133;
-    private Vector3[] keypointPositions = new Vector3[NUM_JOINTS];
-    private Matrix4x4[] matrices = new Matrix4x4[NUM_JOINTS];
-    private MaterialPropertyBlock propertyBlock;
+    public Vector3[] keypoints = new Vector3[NUM_JOINTS];
 
-    // Performance metrics
-    private float lastFrameTime;
-    private int framesReceived;
-    private float updateRate;
-    private int lastFrameId;
+    private VelocityThresholdFilter[] velocityFilters;
+    private OneEuroFilter[] oneEuroFilters;
+    private KalmanFilter3D[] kalmanFilters;
 
-    // Connection status
-    private bool isConnected = false;
+    public bool sphereVisible = false;
+
+    // Multi-stage filtering settings
+    [Header("Filtering Settings")]
+    [Tooltip("Enable/disable velocity threshold filtering")]
+    public bool useVelocityFilter = true;
+    [Tooltip("Enable/disable One Euro filtering")]
+    public bool useOneEuroFilter = true;
+    [Tooltip("Enable/disable Kalman filtering")]
+    public bool useKalmanFilter = true;
+
+    // Velocity filter settings
+    [Header("Velocity Filter Settings")]
+    [Tooltip("Maximum velocity allowed for keypoints (units/sec)")]
+    public float maxVelocity = 5.0f;
+    [Tooltip("Smoothing factor for velocity changes")]
+    [Range(0, 0.99f)]
+    public float velocitySmoothing = 0.5f;
+
+    // One Euro filter settings
+    [Header("One Euro Filter Settings")]
+    [Tooltip("Minimum cutoff frequency")]
+    [Range(0.1f, 5.0f)]
+    public float minCutoff = 1.0f;
+    [Tooltip("Cutoff slope (higher = more aggressive filtering of fast movements)")]
+    [Range(0, 0.1f)]
+    public float beta = 0.007f;
+    [Tooltip("Derivative cutoff frequency")]
+    [Range(0.1f, 5.0f)]
+    public float dCutoff = 1.0f;
+
+    // Kalman Filter Settings
+    [Header("Kalman Filter Settings")]
+    [Tooltip("Initial covariance of the filter")]
+    public float kalmanInitialCovariance = 1.0f;
+    [Tooltip("Process noise (higher = more responsive to changes)")]
+    public float kalmanProcessNoise = 0.1f;
+    [Tooltip("Measurement noise (higher = more smoothing)")]
+    public float kalmanMeasurementNoise = 0.1f;
 
     async void Start()
     {
-        // Initialize material property block for instancing
-        propertyBlock = new MaterialPropertyBlock();
-        propertyBlock.SetColor("_Color", sphereColor);
+        InitializeFilters();
 
-        // Initialize matrices with default transform
+
+        // Instantiate spheres for the joints.
         for (int i = 0; i < NUM_JOINTS; i++)
         {
-            matrices[i] = Matrix4x4.TRS(
-                offset,
-                Quaternion.identity,
-                Vector3.one * sphereSize
-            );
+            GameObject sphere = Instantiate(spherePrefab, this.transform);
+            sphere.name = "JointSphere_" + i;
+            jointSpheres.Add(sphere);
         }
 
-        // Connect to WebSocket server
-        Debug.Log($"Connecting to WebSocket server at {serverUrl}...");
-        websocket = new WebSocket(serverUrl);
+        // Set up the WebSocket.
+        websocket = new WebSocket("ws://127.0.0.1:8765");
 
-        websocket.OnOpen += () => {
-            Debug.Log("WebSocket connection established");
-            isConnected = true;
+        // Log when the connection opens.
+        websocket.OnOpen += () =>
+        {
+            Debug.Log("WebSocket connection open!");
         };
 
-        websocket.OnClose += (e) => {
-            Debug.Log($"WebSocket connection closed: {e}");
-            isConnected = false;
+        // Handle incoming messages.
+        websocket.OnMessage += (bytes) =>
+        {
+            string msg = Encoding.UTF8.GetString(bytes);
+            JObject jsonObj = JObject.Parse(msg);
+            JArray persons = (JArray)jsonObj["keypoints_3d"];
+
+            if (persons != null && persons.Count > 0)
+            {
+                JArray joints = (JArray)persons;
+                int count = Mathf.Min(joints.Count, NUM_JOINTS);
+
+                Debug.Log(joints);
+
+                for (int i = 0; i < count; i++)
+                {
+                    JArray joint = (JArray)joints[i];
+                    float x = -joint[0].Value<float>();
+                    float y = -joint[1].Value<float>();
+                    float z = -joint[2].Value<float>();
+
+                    Vector3 pos = new Vector3(x * scaleFactor, y * scaleFactor, z * scaleFactor);
+
+                    // Apply multi-stage filtering
+                    Vector3 filteredPosition = pos;
+
+                    // Stage 1: Apply velocity filter (if enabled)
+                    if (useVelocityFilter)
+                    {
+                        filteredPosition = velocityFilters[i].Filter(filteredPosition);
+                    }
+
+                    // Stage 2: Apply One Euro filter (if enabled)
+                    if (useOneEuroFilter)
+                    {
+                        filteredPosition = oneEuroFilters[i].Filter(filteredPosition);
+                    }
+
+                    // Stage 3: Apply Kalman filter (if enabled)
+                    if (useKalmanFilter)
+                    {
+                        filteredPosition = kalmanFilters[i].Update(filteredPosition);
+                    }
+
+                    if (!sphereVisible)
+                    {
+                        jointSpheres[i].SetActive(false);
+                    }
+                    else jointSpheres[i].SetActive(true);
+
+                    keypoints[i] = filteredPosition;
+
+                    jointSpheres[i].transform.localPosition = filteredPosition;
+                }
+            }
+            else
+            {
+                Debug.Log("No keypoints received for this frame.");
+            }
         };
 
-        websocket.OnError += (e) => {
-            Debug.LogError($"WebSocket error: {e}");
-        };
-
-        websocket.OnMessage += (bytes) => {
-            ProcessKeypoints(bytes);
-        };
-
+        // Connect the WebSocket.
         await websocket.Connect();
     }
 
-    void ProcessKeypoints(byte[] bytes)
+    private void InitializeFilters()
     {
-        try
+        // Initialize velocity filters (first stage)
+        velocityFilters = new VelocityThresholdFilter[NUM_JOINTS];
+        for (int i = 0; i < NUM_JOINTS; i++)
         {
-            // Ensure we have enough data for the header
-            if (bytes.Length < 8)
-            {
-                Debug.LogError($"Message too short: {bytes.Length} bytes");
-                return;
-            }
-
-            // Parse the header
-            int frameId = BitConverter.ToInt32(bytes, 0);
-            int numJoints = BitConverter.ToInt32(bytes, 4);
-
-            // Validate expected data size
-            int expectedSize = 8 + (numJoints * 12); // Header + (joints * 3 floats * 4 bytes)
-            if (bytes.Length != expectedSize)
-            {
-                Debug.LogError($"Data size mismatch: got {bytes.Length}, expected {expectedSize}");
-                return;
-            }
-
-            // Track frame rate
-            framesReceived++;
-            if (Time.time - lastFrameTime > 1.0f)
-            {
-                updateRate = framesReceived / (Time.time - lastFrameTime);
-                int frameGap = frameId - lastFrameId;
-
-                if (showDebugInfo)
-                {
-                    Debug.Log($"FPS: {updateRate:F1}, Frame: {frameId}, Gap: {frameGap}");
-                }
-
-                framesReceived = 0;
-                lastFrameTime = Time.time;
-                lastFrameId = frameId;
-            }
-
-            // Process all joints
-            for (int i = 0; i < numJoints; i++)
-            {
-                int dataOffset = 8 + (i * 12);
-
-                // Read the 3D position
-                float x = BitConverter.ToSingle(bytes, dataOffset);
-                float y = BitConverter.ToSingle(bytes, dataOffset + 4);
-                float z = BitConverter.ToSingle(bytes, dataOffset + 8);
-
-                // Convert to Unity coordinate system
-                Vector3 position = new Vector3(
-                    -x * scaleFactor,
-                    -y * scaleFactor,
-                    -z * scaleFactor
-                ) + offset;
-
-                // Store the position
-                keypointPositions[i] = position;
-
-                // Update the transformation matrix for instanced rendering
-                matrices[i] = Matrix4x4.TRS(
-                    position,
-                    Quaternion.identity,
-                    Vector3.one * sphereSize
-                );
-            }
+            velocityFilters[i] = new VelocityThresholdFilter(maxVelocity, velocitySmoothing);
         }
-        catch (Exception e)
+
+        // Initialize One Euro filters (second stage)
+        oneEuroFilters = new OneEuroFilter[NUM_JOINTS];
+        for (int i = 0; i < NUM_JOINTS; i++)
         {
-            Debug.LogError($"Error processing keypoints: {e}");
+            oneEuroFilters[i] = new OneEuroFilter(minCutoff, beta, dCutoff);
         }
+
+        // Initialize Kalman filters (third stage)
+        kalmanFilters = new KalmanFilter3D[NUM_JOINTS];
+        for (int i = 0; i < NUM_JOINTS; i++)
+        {
+            kalmanFilters[i] = new KalmanFilter3D(Vector3.zero, kalmanInitialCovariance, kalmanProcessNoise, kalmanMeasurementNoise);
+        }
+
+
     }
 
     void Update()
     {
-        // Process WebSocket messages
+#if !UNITY_WEBGL || UNITY_EDITOR
         if (websocket != null)
         {
-#if !UNITY_WEBGL || UNITY_EDITOR
             websocket.DispatchMessageQueue();
+        }
 #endif
-        }
-
-        // Render all keypoints using GPU instancing
-        if (sphereMesh != null && sphereMaterial != null)
-        {
-            Graphics.DrawMeshInstanced(
-                sphereMesh,
-                0,
-                sphereMaterial,
-                matrices,
-                NUM_JOINTS,
-                propertyBlock
-            );
-        }
     }
 
-    void OnGUI()
+    private async void OnApplicationQuit()
     {
-        if (showDebugInfo)
-        {
-            GUI.Label(new Rect(10, 10, 300, 20), $"Connection: {(isConnected ? "Connected" : "Disconnected")}");
-            GUI.Label(new Rect(10, 30, 300, 20), $"Update rate: {updateRate:F1} FPS");
-            GUI.Label(new Rect(10, 50, 300, 20), $"Keypoints: {NUM_JOINTS}");
-        }
-    }
-
-    async void OnApplicationQuit()
-    {
-        if (websocket != null && websocket.State == WebSocketState.Open)
+        if (websocket != null)
         {
             await websocket.Close();
         }
     }
 
-    // Helper function to reconnect if the connection is lost
-    public async void Reconnect()
-    {
-        if (websocket != null && websocket.State != WebSocketState.Open)
-        {
-            await websocket.Connect();
-        }
-    }
+
 }

@@ -8,7 +8,10 @@ public class AvatarController : MonoBehaviour
     // Public KeypointReceiver
     // public KeypointReceiver keypointReceiver;
     public PoseDetection poseDetection;
+    // Add a reference to HandDetection
+    public HandDetection handDetection;
 
+    private bool HandInverseSetup = true;
     [Range(0f, 1f)]
     public float smoothing = 0.7f; // Smoothing factor for rotations
 
@@ -47,42 +50,6 @@ public class AvatarController : MonoBehaviour
     private const string LEFT_TOEBASE = "mixamorig:LeftToe_End";
     private const string RIGHT_TOEBASE = "mixamorig:RightToe_End";
 
-    // COCO indices
-    //private const int NOSE_INDEX = 0;
-    //private const int LEFT_EYE_INDEX = 1;
-    //private const int RIGHT_EYE_INDEX = 2;
-    //private const int LEFT_EAR_INDEX = 3;
-    //private const int RIGHT_EAR_INDEX = 4;
-    //private const int LEFT_SHOULDER_INDEX = 5;
-    //private const int LEFT_ELBOW_INDEX = 7;
-    //private const int LEFT_WRIST_INDEX = 9;
-    //private const int LEFT_HIP_INDEX = 11;
-    //private const int RIGHT_HIP_INDEX = 12;
-    //private const int RIGHT_SHOULDER_INDEX = 6;
-    //private const int RIGHT_ELBOW_INDEX = 8;
-    //private const int RIGHT_WRIST_INDEX = 10;
-    //private const int RIGHT_UPLEG_INDEX = 12;
-    //private const int LEFT_UPLEG_INDEX = 11;
-    //private const int RIGHT_KNEE_INDEX = 14;
-    //private const int LEFT_KNEE_INDEX = 13;
-    //private const int RIGHT_ANKLE_INDEX = 16;
-    //private const int LEFT_ANKLE_INDEX = 15;
-    //private const int LEFT_BIG_TOE_INDEX = 17;
-    //private const int RIGHT_BIG_TOE_INDEX = 20;
-    //private const int LEFT_SMALL_TOE_INDEX = 18;
-    //private const int RIGHT_ANKLE_BOTTOM = 22;
-    //private const int LEFT_ANKLE_BOTTOM = 19;
-    //private const int RIGHT_SMALL_TOE_INDEX = 21;
-    //private const int RIGHT_PINKY_BASE_INDEX = 129;
-    //private const int RIGHT_RING_BASE_INDEX = 125;
-    //private const int RIGHT_MIDDLE_BASE_INDEX = 121;
-    //private const int RIGHT_INDEX_BASE_INDEX = 117;
-    //private const int RIGHT_THUMB_BASE_INDEX = 114;
-    //private const int LEFT_PINKY_BASE_INDEX = 108;
-    //private const int LEFT_RING_BASE_INDEX = 104;
-    //private const int LEFT_MIDDLE_BASE_INDEX = 100;
-    //private const int LEFT_INDEX_BASE_INDEX = 96;
-    //private const int LEFT_THUMB_BASE_INDEX = 93;
 
 
     // BlazePose keypoint indices
@@ -147,8 +114,8 @@ public class AvatarController : MonoBehaviour
     private float centerTall = 200 * 0.75f;
     private float tall = 200 * 0.75f;
     private float prevTall = 200 * 0.75f;
-    public float ZScaleOffset = -0.3f;
-    public float ZTrueScale = 0.47f; //hea kui 0.1 - 0.5
+    //public float ZScaleOffset = -0.3f;
+    //public float ZTrueScale = 0.47f; //hea kui 0.1 - 0.5
 
 
 
@@ -287,38 +254,49 @@ public class AvatarController : MonoBehaviour
 
         }
 
-        // Hand Specific Inverse Setup (same as before - with warnings)
-        if (bones.ContainsKey(LEFT_HAND))
-        {
-            Bone lHandBone = bones[LEFT_HAND];
-            Bone lIindex = bones[LEFT_INDEX_BASE];
-            Bone lMiddle = bones[LEFT_MIDDLE_BASE];
-            //Debug.Log($"{lHandBone.KeypointPosition}, {lThumb.KeypointPosition}, {lMiddle.KeypointPosition}");
-            Vector3 lf = TriangleNormal(lHandBone.Transform.position, lMiddle.Transform.position, lIindex.Transform.position);
-
-            Debug.Log(lf);
-            Debug.Log(lHandBone.Transform.position);
-            Debug.DrawRay(lHandBone.Transform.position, lf*100f, Color.green );
+     //   // Hand Specific Inverse Setup (same as before - with warnings)
+     //   if (bones.ContainsKey(LEFT_HAND))
+     //   {
+     //       Bone lHandBone = bones[LEFT_HAND];
+     //       Bone lIindex = bones[LEFT_INDEX_BASE];
+     //       Bone lPinky = bones[LEFT_PINKY_BASE];
+     //       //Vector3 lf = TriangleNormal(lHandBone.Transform.position, lPinky.Transform.position, lIindex.Transform.position);
+     //       //lHandBone.InitRotation = lHandBone.Transform.rotation;
+     //       //lHandBone.InverseRotation = Quaternion.Inverse(Quaternion.LookRotation((lIindex.Transform.position - lPinky.Transform.position),lf)) * lHandBone.InitRotation;
+     //       //SetupHandInverseRotationFromSkeleton(lHandBone, lIindex, lPinky, true);
+     //
+     //       // Calculate palm normal and midpoint between index and pinky
+     //       Vector3 palmNormal = TriangleNormal(lHandBone.Transform.position, lPinky.Transform.position, lIindex.Transform.position);
+     //       Vector3 midHand = (lIindex.Transform.position + lPinky.Transform.position) / 2.0f;
+     //
+     //       // Store initial rotation
+     //       lHandBone.InitRotation = lHandBone.Transform.rotation;
+     //
+     //       // Calculate inverse rotation
+     //       lHandBone.InverseRotation = Quaternion.Inverse(
+     //           Quaternion.LookRotation(
+     //               -lHandBone.Transform.position + midHand, // Forward direction
+     //               palmNormal // Up direction
+     //           )
+     //       ) * lHandBone.InitRotation;
+     //   }
+     //
+     //   if (bones.ContainsKey(RIGHT_HAND))//tleb teha
+     //   {
+     //       Bone rHandBone = bones[RIGHT_HAND];
+     //       Bone rIndex = bones[RIGHT_INDEX_BASE];
+     //       Bone rPinky = bones[RIGHT_PINKY_BASE];
+     //       //Debug.Log($"{rHandBone.KeypointPosition}, {rThumb.KeypointPosition}, {rMiddle.KeypointPosition}");
+     //       SetupHandInverseRotationFromSkeleton(rHandBone, rIndex, rPinky, false);
+     //
+     //       //Vector3 rf = TriangleNormal(rHandBone.Transform.position, rPinky.Transform.position, rIndex.Transform.position);
+     //
+     //       //Debug.DrawRay(rHandBone.Transform.position, rf * 20f, Color.green);
+     //
+     //       //rHandBone.InitRotation = rHandBone.Transform.rotation;
+     //       //rHandBone.InverseRotation = Quaternion.Inverse(Quaternion.LookRotation(rf, rPinky.KeypointPosition - rHandBone.KeypointPosition)) * rHandBone.InitRotation;
+     //   }
             
-
-            lHandBone.InitRotation = lHandBone.Transform.rotation;
-            lHandBone.InverseRotation = Quaternion.Inverse(Quaternion.LookRotation(lf, lMiddle.KeypointPosition - lHandBone.KeypointPosition)) * lHandBone.InitRotation;
-        }
-
-        if (bones.ContainsKey(RIGHT_HAND))
-        {
-            Bone rHandBone = bones[RIGHT_HAND];
-            Bone rIndex = bones[RIGHT_INDEX_BASE];
-            Bone rMiddle = bones[RIGHT_MIDDLE_BASE];
-            //Debug.Log($"{rHandBone.KeypointPosition}, {rThumb.KeypointPosition}, {rMiddle.KeypointPosition}");
-
-            Vector3 rf = TriangleNormal(rHandBone.Transform.position, rMiddle.Transform.position, rIndex.Transform.position);
-
-            Debug.DrawRay(rHandBone.Transform.position, rf*20f, Color.green);
-
-            rHandBone.InitRotation = rHandBone.Transform.rotation;
-            rHandBone.InverseRotation = Quaternion.Inverse(Quaternion.LookRotation(rf, rMiddle.KeypointPosition - rHandBone.KeypointPosition)) * rHandBone.InitRotation;
-        }
 
 
 
@@ -351,16 +329,36 @@ public class AvatarController : MonoBehaviour
             return; // Exit Update if no keypoint data
         }
 
+
+
         Vector3[] keypoints3D = poseDetection.keypoints; // Correct type: List<Vector3>
         // --- 1. Update Bone Keypoint Positions ---
         UpdateBoneKeypointPositions(keypoints3D);
 
+        //if (HandInverseSetup)
+        //{
+        //    SetupHandInverseRotations();
+        //    HandInverseSetup=false;
+        //}
+
+        
+
+        // Upper body segments: head->neck and neck->hips.
         var dist1 = Vector3.Distance(bones[HEAD].KeypointPosition, bones[NECK].KeypointPosition);
         var dist2 = Vector3.Distance(bones[NECK].KeypointPosition, bones[HIPS].KeypointPosition);
-        var avgKneePos = (bones[LEFT_LEG].KeypointPosition + bones[RIGHT_LEG].KeypointPosition) / 2f;
-        var dist3 = Vector3.Distance(bones[HIPS].KeypointPosition, avgKneePos);
-        var dist4 = Vector3.Distance(avgKneePos, (bones[LEFT_FOOT].KeypointPosition + bones[RIGHT_FOOT].KeypointPosition) / 2f);
-        var height = dist1 + dist2 + dist3 + dist4;
+
+        // Calculate the leg chain length for each leg.
+        // Leg chain = hips -> knee + knee -> foot.
+        var leftLegHeight = Vector3.Distance(bones[HIPS].KeypointPosition, bones[LEFT_LEG].KeypointPosition) +
+                            Vector3.Distance(bones[LEFT_LEG].KeypointPosition, bones[LEFT_FOOT].KeypointPosition);
+        var rightLegHeight = Vector3.Distance(bones[HIPS].KeypointPosition, bones[RIGHT_LEG].KeypointPosition) +
+                             Vector3.Distance(bones[RIGHT_LEG].KeypointPosition, bones[RIGHT_FOOT].KeypointPosition);
+
+        // Choose the maximum leg chain length.
+        var legHeight = Mathf.Max(leftLegHeight, rightLegHeight);
+
+        // The overall height is the sum of the upper body and the longer leg chain.
+        var height = dist1 + dist2 + legHeight;
 
         //Debug.Log(height);
 
@@ -372,16 +370,19 @@ public class AvatarController : MonoBehaviour
         {
             tall = centerTall;
         }
-        var zMovement =  tall * (1/ZTrueScale) + ZScaleOffset;
+        //var zMovement = tall * (1 / ZTrueScale) + ZScaleOffset;
         //Debug.Log(zMovement);
+
 
         // --- 2. Hip Movement and Rotation ---
         Vector3 forward = TriangleNormal(bones[HIPS].KeypointPosition, bones[LEFT_UPLEG].KeypointPosition, bones[RIGHT_UPLEG].KeypointPosition); // Use KeypointPositions
         if (bones[HIPS].Transform != null && forward != Vector3.zero)
         {
-            bones[HIPS].Transform.position = bones[HIPS].KeypointPosition * 2.5f + new Vector3(initPosition.x, initPosition.y, initPosition.z + zMovement); // Scaling factor 0.005f and initPosition - adjust as needed
+            bones[HIPS].Transform.position = bones[HIPS].KeypointPosition * 1.37f + new Vector3(initPosition.x, initPosition.y, initPosition.z); // Scaling factor 0.005f and initPosition - adjust as needed
             bones[HIPS].Transform.rotation = Quaternion.LookRotation(forward) * bones[HIPS].InverseRotation;
         }
+
+        this.gameObject.transform.localScale = new Vector3(tall, tall, tall);
 
         //Debug.Log(bones[HIPS].Transform.position.z);
         //Debug.Log(this.gameObject.transform.position.z);
@@ -422,8 +423,42 @@ public class AvatarController : MonoBehaviour
         bones[HEAD].Transform.rotation = Quaternion.LookRotation(gaze, f) * bones[HEAD].InverseRotation;
 
 
-        UpdateHandRotation(LEFT_HAND, LEFT_INDEX_BASE, LEFT_PINKY_BASE);
-        UpdateHandRotation(RIGHT_HAND, RIGHT_INDEX_BASE, RIGHT_PINKY_BASE);
+        //var lHand = Bones[LEFT_HAND];
+        //var lIndex = Bones[LEFT_INDEX_BASE];
+        //var lPinky = Bones[LEFT_PINKY_BASE];
+        //var lf = TriangleNormal(lHand.KeypointPosition, lPinky.KeypointPosition, lIndex.KeypointPosition);
+        //var targetRotationHand = Quaternion.LookRotation(lIndex.KeypointPosition - lPinky.KeypointPosition, lf) * lHand.InverseRotation;
+        //lHand.Transform.rotation = Quaternion.Slerp(lHand.Transform.rotation, targetRotationHand, smoothing); // Apply smoothing
+
+        // In update when applying hand rotation
+        //if (bones.ContainsKey(LEFT_HAND))
+        //{
+        //    Bone lHand = bones[LEFT_HAND];
+        //    Bone lIndex = bones[LEFT_INDEX_BASE];
+        //    Bone lPinky = bones[LEFT_PINKY_BASE];
+        //
+        //    // Calculate current palm normal from keypoints
+        //    Vector3 palmNormal = TriangleNormal(lHand.KeypointPosition, lPinky.KeypointPosition, lIndex.KeypointPosition);
+        //    Vector3 midHand = (lIndex.KeypointPosition + lPinky.KeypointPosition) / 2.0f;
+        //
+        //    // Apply rotation with inverse
+        //    Quaternion targetRotation = Quaternion.LookRotation(
+        //        -lHand.KeypointPosition + midHand, // Forward direction
+        //        palmNormal // Up direction
+        //    ) * lHand.InverseRotation;
+        //
+        //    lHand.Transform.rotation = Quaternion.Slerp(lHand.Transform.rotation, targetRotation, smoothing);
+        //}
+
+        //UpdateHandRotationTest(LEFT_HAND, LEFT_INDEX_BASE, LEFT_PINKY_BASE);
+
+        //var rHand = Bones[RIGHT_HAND];
+        //var rIndex = Bones[RIGHT_INDEX_BASE];
+        //var rPinky = Bones[RIGHT_INDEX_BASE];
+        //var rf = TriangleNormal(rHand.KeypointPosition, rIndex.KeypointPosition, r)
+
+        //UpdateHandRotation(LEFT_HAND, LEFT_INDEX_BASE, LEFT_PINKY_BASE);
+        //UpdateHandRotation(RIGHT_HAND, RIGHT_INDEX_BASE, RIGHT_PINKY_BASE);
 
 
     }
@@ -437,7 +472,7 @@ public class AvatarController : MonoBehaviour
         var Spine1 = (MidLeg + ChestKeypont) / 2f; //spine1
         var Spine = (MidLeg + Spine1) / 2f; //spine
         var Hip = (MidLeg + Spine) / 2; //hip
-        var Spine2 = (ChestKeypont + Spine1) /2; //spine2
+        var Spine2 = (ChestKeypont + Spine1) / 2; //spine2
 
         var HeadKeypoint = GetKeypointOrZero(keypoints3D, LEFT_EAR_INDEX, RIGHT_EAR_INDEX);
         var NeckKeypoint = (ChestKeypont + HeadKeypoint) / 2f;
@@ -467,10 +502,10 @@ public class AvatarController : MonoBehaviour
         if (bones.ContainsKey(RIGHT_ARM)) bones[RIGHT_ARM].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_SHOULDER_INDEX);
         if (bones.ContainsKey(LEFT_FOREARM)) bones[LEFT_FOREARM].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_ELBOW_INDEX);
         if (bones.ContainsKey(RIGHT_FOREARM)) bones[RIGHT_FOREARM].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_ELBOW_INDEX);
-        if (bones.ContainsKey(LEFT_HAND)) bones[LEFT_HAND].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_WRIST_INDEX); 
-        if (bones.ContainsKey(RIGHT_HAND)) bones[RIGHT_HAND].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_WRIST_INDEX); 
-        if (bones.ContainsKey(LEFT_UPLEG)) bones[LEFT_UPLEG].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_HIP_INDEX);  
-        if (bones.ContainsKey(RIGHT_UPLEG)) bones[RIGHT_UPLEG].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_HIP_INDEX); 
+        if (bones.ContainsKey(LEFT_HAND)) bones[LEFT_HAND].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_WRIST_INDEX);
+        if (bones.ContainsKey(RIGHT_HAND)) bones[RIGHT_HAND].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_WRIST_INDEX);
+        if (bones.ContainsKey(LEFT_UPLEG)) bones[LEFT_UPLEG].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_HIP_INDEX);
+        if (bones.ContainsKey(RIGHT_UPLEG)) bones[RIGHT_UPLEG].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_HIP_INDEX);
         if (bones.ContainsKey(LEFT_LEG)) bones[LEFT_LEG].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_KNEE_INDEX);
         if (bones.ContainsKey(RIGHT_LEG)) bones[RIGHT_LEG].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_KNEE_INDEX);
         if (bones.ContainsKey(LEFT_FOOT)) bones[LEFT_FOOT].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_ANKLE_INDEX);
@@ -479,8 +514,8 @@ public class AvatarController : MonoBehaviour
         if (bones.ContainsKey(RIGHT_TOEBASE)) bones[RIGHT_TOEBASE].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_FOOT_INDEX);
         if (bones.ContainsKey(LEFT_THUMB_BASE)) bones[LEFT_THUMB_BASE].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_THUMB_BASE_INDEX);
         if (bones.ContainsKey(RIGHT_THUMB_BASE)) bones[RIGHT_THUMB_BASE].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_THUMB_BASE_INDEX);
-       // if (bones.ContainsKey(LEFT_MIDDLE_BASE)) bones[LEFT_MIDDLE_BASE].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_MIDDLE_BASE_INDEX);
-       // if (bones.ContainsKey(RIGHT_MIDDLE_BASE)) bones[RIGHT_MIDDLE_BASE].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_MIDDLE_BASE_INDEX);
+        // if (bones.ContainsKey(LEFT_MIDDLE_BASE)) bones[LEFT_MIDDLE_BASE].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_MIDDLE_BASE_INDEX);
+        // if (bones.ContainsKey(RIGHT_MIDDLE_BASE)) bones[RIGHT_MIDDLE_BASE].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_MIDDLE_BASE_INDEX);
         if (bones.ContainsKey(LEFT_INDEX_BASE)) bones[LEFT_INDEX_BASE].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_INDEX_BASE_INDEX);
         if (bones.ContainsKey(RIGHT_INDEX_BASE)) bones[RIGHT_INDEX_BASE].KeypointPosition = GetKeypointOrZero(keypoints3D, RIGHT_INDEX_BASE_INDEX);
         if (bones.ContainsKey(LEFT_PINKY_BASE)) bones[LEFT_PINKY_BASE].KeypointPosition = GetKeypointOrZero(keypoints3D, LEFT_PINKY_BASE_INDEX);
@@ -527,21 +562,26 @@ public class AvatarController : MonoBehaviour
             Bone indexFingerBone = bones[indexBaseBoneName];
             Bone middleFingerBone = bones[middleBaseBoneName];
 
+            //Debug.Log(handBone.Transform.name);
+            //Debug.Log(indexFingerBone.Transform.name);
+            //Debug.Log(middleFingerBone.Transform.name);
+
+
             if (handBone.Transform != null && indexFingerBone.KeypointPosition != Vector3.zero && middleFingerBone.KeypointPosition != Vector3.zero)
             {
                 Vector3 handForward = Vector3.zero;
                 if (indexFingerBone.Transform.name.Contains("Left"))
                 {
                     handForward = TriangleNormal(handBone.KeypointPosition, indexFingerBone.KeypointPosition, middleFingerBone.KeypointPosition); // Hand forward using keypoints
-
+                    Debug.Log(handForward);
                 }
                 else
                 {
                     handForward = TriangleNormal(handBone.KeypointPosition, middleFingerBone.KeypointPosition, indexFingerBone.KeypointPosition); // Hand forward using keypoints
 
                 }
-                Quaternion targetHandRotation = Quaternion.LookRotation(handForward, middleFingerBone.KeypointPosition - handBone.KeypointPosition); // no inverse currectnly
-               
+                Quaternion targetHandRotation = Quaternion.LookRotation(Vector3.forward, middleFingerBone.KeypointPosition - handBone.KeypointPosition); // no inverse currectnly
+
                 if (!float.IsNaN(targetHandRotation.x) && !float.IsNaN(targetHandRotation.y) && !float.IsNaN(targetHandRotation.z) && !float.IsNaN(targetHandRotation.w)) // NaN check
                 {
                     handBone.Transform.rotation = Quaternion.Slerp(handBone.Transform.rotation, targetHandRotation, smoothing); // Apply smoothing
@@ -553,6 +593,198 @@ public class AvatarController : MonoBehaviour
 
                 //Debug.DrawRay(handBone.Transform.position, handForward, Color.yellow);
 
+            }
+        }
+    }
+
+    // Add this to the FindAndCacheBones method, after other bone setups
+    private void SetupHandInverseRotations()
+    {
+        // Setup Left Hand Inverse Rotation
+        if (bones.ContainsKey(LEFT_HAND) && handDetection != null && handDetection.leftHandDetected)
+        {
+            Bone leftHandBone = bones[LEFT_HAND];
+
+            // Get key points from hand detection
+            Vector3 wristPos = handDetection.GetLeftHandKeypointPosition(HandDetection.HandKeypoint.Wrist);
+            Vector3 indexPos = handDetection.GetLeftHandKeypointPosition(HandDetection.HandKeypoint.IndexMCP);
+            Vector3 pinkyPos = handDetection.GetLeftHandKeypointPosition(HandDetection.HandKeypoint.PinkyMCP);
+            Vector3 middlePos = handDetection.GetLeftHandKeypointPosition(HandDetection.HandKeypoint.MiddleMCP);
+
+            // Only proceed if we have valid keypoints
+            if (wristPos != Vector3.zero && indexPos != Vector3.zero && pinkyPos != Vector3.zero)
+            {
+                // Create a palm normal using the cross product of key vectors
+                Vector3 leftHandNormal = Vector3.Cross(
+                    (indexPos - wristPos).normalized,
+                    (pinkyPos - wristPos).normalized
+                ).normalized;
+
+                // Create a forward vector along the middle of the palm
+                Vector3 leftHandForward = (middlePos - wristPos).normalized;
+
+                // Store the initial rotation
+                leftHandBone.InitRotation = leftHandBone.Transform.rotation;
+
+                // Calculate inverse rotation using hand orientation from keypoints
+                leftHandBone.InverseRotation = Quaternion.Inverse(
+                    Quaternion.LookRotation(leftHandForward, leftHandNormal)
+                ) * leftHandBone.InitRotation;
+
+                Debug.Log("Left hand inverse rotation set up with hand detection data");
+            }
+            else
+            {
+                // Fallback to avatar skeleton-based setup
+                SetupHandInverseRotationFromSkeleton(leftHandBone, bones[LEFT_INDEX_BASE], bones[LEFT_PINKY_BASE], true);
+            }
+        }
+        else if (bones.ContainsKey(LEFT_HAND))
+        {
+            // Fallback to avatar skeleton-based setup if hand detection isn't available
+            SetupHandInverseRotationFromSkeleton(bones[LEFT_HAND], bones[LEFT_INDEX_BASE], bones[LEFT_PINKY_BASE], true);
+        }
+
+        // Setup Right Hand Inverse Rotation
+        if (bones.ContainsKey(RIGHT_HAND) && handDetection != null && handDetection.rightHandDetected)
+        {
+            Bone rightHandBone = bones[RIGHT_HAND];
+
+            // Get key points from hand detection
+            Vector3 wristPos = handDetection.GetRightHandKeypointPosition(HandDetection.HandKeypoint.Wrist);
+            Vector3 indexPos = handDetection.GetRightHandKeypointPosition(HandDetection.HandKeypoint.IndexMCP);
+            Vector3 pinkyPos = handDetection.GetRightHandKeypointPosition(HandDetection.HandKeypoint.PinkyMCP);
+            Vector3 middlePos = handDetection.GetRightHandKeypointPosition(HandDetection.HandKeypoint.MiddleMCP);
+
+            // Only proceed if we have valid keypoints
+            if (wristPos != Vector3.zero && indexPos != Vector3.zero && pinkyPos != Vector3.zero)
+            {
+                // Create a palm normal using the cross product of key vectors
+                // Note: For the right hand, we invert the cross product direction to account for mirroring
+                Vector3 rightHandNormal = Vector3.Cross(
+                    (pinkyPos - wristPos).normalized,
+                    (indexPos - wristPos).normalized
+                ).normalized;
+
+                // Create a forward vector along the middle of the palm
+                Vector3 rightHandForward = (middlePos - wristPos).normalized;
+
+                // Store the initial rotation
+                rightHandBone.InitRotation = rightHandBone.Transform.rotation;
+
+                // Calculate inverse rotation using hand orientation from keypoints
+                rightHandBone.InverseRotation = Quaternion.Inverse(
+                    Quaternion.LookRotation(rightHandForward, rightHandNormal)
+                ) * rightHandBone.InitRotation;
+
+                Debug.Log("Right hand inverse rotation set up with hand detection data");
+            }
+            else
+            {
+                // Fallback to avatar skeleton-based setup
+                SetupHandInverseRotationFromSkeleton(rightHandBone, bones[RIGHT_INDEX_BASE], bones[RIGHT_PINKY_BASE], false);
+            }
+        }
+        else if (bones.ContainsKey(RIGHT_HAND))
+        {
+            // Fallback to avatar skeleton-based setup if hand detection isn't available
+            SetupHandInverseRotationFromSkeleton(bones[RIGHT_HAND], bones[RIGHT_INDEX_BASE], bones[RIGHT_PINKY_BASE], false);
+        }
+    }
+
+    // Helper method to set up hand inverse rotation using avatar skeleton
+    private void SetupHandInverseRotationFromSkeleton(Bone handBone, Bone indexBone, Bone pinkyBone, bool isLeftHand)
+    {
+        if (handBone.Transform != null && indexBone.Transform != null && pinkyBone.Transform != null)
+        {
+            Vector3 handNormal;
+
+            if (isLeftHand)
+            {
+                // Left hand: Calculate normal from the triangle formed by hand, pinky, index
+                handNormal = TriangleNormal(
+                    handBone.Transform.position,
+                    pinkyBone.Transform.position,
+                    indexBone.Transform.position
+                );
+
+                handBone.InitRotation = handBone.Transform.rotation;
+                handBone.InverseRotation = Quaternion.Inverse(
+                    Quaternion.LookRotation(
+                        indexBone.Transform.position - pinkyBone.Transform.position,
+                        handNormal
+                    )
+                ) * handBone.InitRotation;
+            }
+            else
+            {
+                // Right hand: Calculate normal from the triangle formed by hand, index, pinky
+                handNormal = TriangleNormal(
+                    handBone.Transform.position,
+                    indexBone.Transform.position,
+                    pinkyBone.Transform.position
+                );
+
+                handBone.InitRotation = handBone.Transform.rotation;
+                handBone.InverseRotation = Quaternion.Inverse(
+                    Quaternion.LookRotation(
+                        pinkyBone.Transform.position - indexBone.Transform.position,
+                        handNormal
+                    )
+                ) * handBone.InitRotation;
+            }
+
+            Debug.Log($"{(isLeftHand ? "Left" : "Right")} hand inverse rotation set up from skeleton");
+        }
+    }
+
+    // In UpdateHandRotation method
+    void UpdateHandRotationTest(string handBoneName, string indexBaseBoneName, string pinkyBaseBoneName)
+    {
+        if (bones.ContainsKey(handBoneName) && handDetection != null)
+        {
+            Bone handBone = bones[handBoneName];
+
+            // Check which hand we're dealing with
+            bool isLeftHand = handBoneName.Contains("Left");
+
+            // Only proceed if the corresponding hand is detected
+            if ((isLeftHand && handDetection.leftHandDetected) ||
+                (!isLeftHand && handDetection.rightHandDetected))
+            {
+                // Get key points from hand detection
+                Vector3 wristPos = isLeftHand ?
+                    handDetection.GetLeftHandKeypointPosition(HandDetection.HandKeypoint.Wrist) :
+                    handDetection.GetRightHandKeypointPosition(HandDetection.HandKeypoint.Wrist);
+
+                Vector3 indexPos = isLeftHand ?
+                    handDetection.GetLeftHandKeypointPosition(HandDetection.HandKeypoint.IndexMCP) :
+                    handDetection.GetRightHandKeypointPosition(HandDetection.HandKeypoint.IndexMCP);
+
+                Vector3 pinkyPos = isLeftHand ?
+                    handDetection.GetLeftHandKeypointPosition(HandDetection.HandKeypoint.PinkyMCP) :
+                    handDetection.GetRightHandKeypointPosition(HandDetection.HandKeypoint.PinkyMCP);
+
+                Vector3 middlePos = isLeftHand ?
+                    handDetection.GetLeftHandKeypointPosition(HandDetection.HandKeypoint.MiddleMCP) :
+                    handDetection.GetRightHandKeypointPosition(HandDetection.HandKeypoint.MiddleMCP);
+
+                // Create a more robust hand plane normal using the palm keypoints
+                Vector3 handNormal = Vector3.Cross(
+                    (indexPos - wristPos).normalized,
+                    (pinkyPos - wristPos).normalized
+                ).normalized;
+
+                // Flip the normal for the right hand to match Unity's coordinate system
+                if (!isLeftHand)
+                    handNormal = -handNormal;
+
+                // Create a forward vector along the middle of the palm
+                Vector3 handForward = (middlePos - wristPos).normalized;
+
+                // Apply the rotation with the inverse
+                Quaternion targetRotation = Quaternion.LookRotation(handForward, handNormal) * handBone.InverseRotation;
+                handBone.Transform.rotation = Quaternion.Slerp(handBone.Transform.rotation, targetRotation, smoothing);
             }
         }
     }

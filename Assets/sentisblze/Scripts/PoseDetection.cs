@@ -19,6 +19,7 @@ public class PoseDetection : MonoBehaviour
     public GameObject spherePrefab;
     private const int k_NumKeypoints = 33;
     private readonly List<GameObject> jointSpheres = new List<GameObject>();
+    public bool spheresVisible = false;
 
     const int k_NumAnchors = 2254;
     float[,] m_Anchors;
@@ -31,6 +32,11 @@ public class PoseDetection : MonoBehaviour
     Tensor<float> m_DetectorInput;
     Tensor<float> m_LandmarkerInput;
     Awaitable m_DetectAwaitable;
+
+    private Texture2D personCropTexture;
+    public bool isPersonCropReady = false;
+    private bool textureInitialized = false;
+
 
     float m_TextureWidth;
     float m_TextureHeight;
@@ -119,7 +125,9 @@ public class PoseDetection : MonoBehaviour
     public Text debugText;
 
     public async void Start()
-    {
+    {   
+
+  
         // Create a sphere for each keypoint
         for (int i = 0; i < k_NumKeypoints; i++)
         {
@@ -131,7 +139,7 @@ public class PoseDetection : MonoBehaviour
         // Initialize multi-stage filters
         InitializeFilters();
 
-        m_Anchors = BlazeUtils.LoadAnchors(anchorsCSV.text, k_NumAnchors);
+        m_Anchors = BlazeUtilsHand.LoadAnchors(anchorsCSV.text, k_NumAnchors);
 
         InitializeModels();
 
@@ -306,7 +314,7 @@ public class PoseDetection : MonoBehaviour
         var outputs = Functional.Forward(poseDetectorModel, input);
         var boxes = outputs[0]; // (1, 2254, 12)
         var scores = outputs[1]; // (1, 2254, 1)
-        var idx_scores_boxes = BlazeUtils.ArgMaxFiltering(boxes, scores);
+        var idx_scores_boxes = BlazeUtilsHand.ArgMaxFiltering(boxes, scores);
         poseDetectorModel = graph.Compile(idx_scores_boxes.Item1, idx_scores_boxes.Item2, idx_scores_boxes.Item3);
         m_PoseDetectorWorker = new Worker(poseDetectorModel, BackendType.GPUCompute);
 
@@ -387,11 +395,11 @@ public class PoseDetection : MonoBehaviour
 
         var size = Mathf.Max(texture.width, texture.height);
         var scale = size / (float)detectorInputSize;
-        var M = BlazeUtils.mul(
-            BlazeUtils.TranslationMatrix(0.5f * (new float2(texture.width, texture.height) + new float2(-size, size))),
-            BlazeUtils.ScaleMatrix(new float2(scale, -scale))
+        var M = BlazeUtilsHand.mul(
+            BlazeUtilsHand.TranslationMatrix(0.5f * (new float2(texture.width, texture.height) + new float2(-size, size))),
+            BlazeUtilsHand.ScaleMatrix(new float2(scale, -scale))
         );
-        BlazeUtils.SampleImageAffine(texture, m_DetectorInput, M);
+        BlazeUtilsHand.SampleImageAffine(texture, m_DetectorInput, M);
 
         m_PoseDetectorWorker.Schedule(m_DetectorInput);
 
@@ -416,8 +424,8 @@ public class PoseDetection : MonoBehaviour
         var idx = outputIdx[0];
         var anchorPosition = detectorInputSize * new float2(m_Anchors[idx, 0], m_Anchors[idx, 1]);
 
-        var face_ImageSpace = BlazeUtils.mul(M, anchorPosition + new float2(outputBox[0, 0, 0], outputBox[0, 0, 1]));
-        var faceTopRight_ImageSpace = BlazeUtils.mul(M, anchorPosition + new float2(outputBox[0, 0, 0] + 0.5f * outputBox[0, 0, 2], outputBox[0, 0, 1] + 0.5f * outputBox[0, 0, 3]));
+        var face_ImageSpace = BlazeUtilsHand.mul(M, anchorPosition + new float2(outputBox[0, 0, 0], outputBox[0, 0, 1]));
+        var faceTopRight_ImageSpace = BlazeUtilsHand.mul(M, anchorPosition + new float2(outputBox[0, 0, 0] + 0.5f * outputBox[0, 0, 2], outputBox[0, 0, 1] + 0.5f * outputBox[0, 0, 3]));
 
         // Store ROI for tracking mode
         float roiWidth = Mathf.Abs(faceTopRight_ImageSpace.x - face_ImageSpace.x) * roiExpansionFactor;
@@ -429,29 +437,29 @@ public class PoseDetection : MonoBehaviour
             Mathf.Min(m_TextureHeight, roiHeight)
         );
 
-        var kp1_ImageSpace = BlazeUtils.mul(M, anchorPosition + new float2(outputBox[0, 0, 4 + 2 * 0 + 0], outputBox[0, 0, 4 + 2 * 0 + 1]));
-        var kp2_ImageSpace = BlazeUtils.mul(M, anchorPosition + new float2(outputBox[0, 0, 4 + 2 * 1 + 0], outputBox[0, 0, 4 + 2 * 1 + 1]));
+        var kp1_ImageSpace = BlazeUtilsHand.mul(M, anchorPosition + new float2(outputBox[0, 0, 4 + 2 * 0 + 0], outputBox[0, 0, 4 + 2 * 0 + 1]));
+        var kp2_ImageSpace = BlazeUtilsHand.mul(M, anchorPosition + new float2(outputBox[0, 0, 4 + 2 * 1 + 0], outputBox[0, 0, 4 + 2 * 1 + 1]));
         var delta_ImageSpace = kp2_ImageSpace - kp1_ImageSpace;
         var dscale = 1.25f;
         var radius = dscale * math.length(delta_ImageSpace);
         var theta = math.atan2(delta_ImageSpace.y, delta_ImageSpace.x);
         var origin2 = new float2(0.5f * landmarkerInputSize, 0.5f * landmarkerInputSize);
         var scale2 = radius / (0.5f * landmarkerInputSize);
-        var M2 = BlazeUtils.mul(
-            BlazeUtils.mul(
-                BlazeUtils.mul(
-                    BlazeUtils.TranslationMatrix(kp1_ImageSpace),
-                    BlazeUtils.ScaleMatrix(new float2(scale2, -scale2))
+        var M2 = BlazeUtilsHand.mul(
+            BlazeUtilsHand.mul(
+                BlazeUtilsHand.mul(
+                    BlazeUtilsHand.TranslationMatrix(kp1_ImageSpace),
+                    BlazeUtilsHand.ScaleMatrix(new float2(scale2, -scale2))
                 ),
-                BlazeUtils.RotationMatrix(0.5f * Mathf.PI - theta)
+                BlazeUtilsHand.RotationMatrix(0.5f * Mathf.PI - theta)
             ),
-            BlazeUtils.TranslationMatrix(-origin2)
+            BlazeUtilsHand.TranslationMatrix(-origin2)
         );
 
         // Store transform for tracking
         previousTransform = M2;
 
-        BlazeUtils.SampleImageAffine(texture, m_LandmarkerInput, M2);
+        BlazeUtilsHand.SampleImageAffine(texture, m_LandmarkerInput, M2);
 
         // Calculate transform matrix for segmentation
         Matrix4x4 finalTransform = CalculateTransformMatrix(M2, landmarkerInputSize);
@@ -491,7 +499,7 @@ public class PoseDetection : MonoBehaviour
             var M2 = previousTransform;
 
             // Sample the image using the previous transform
-            BlazeUtils.SampleImageAffine(texture, m_LandmarkerInput, M2);
+            BlazeUtilsHand.SampleImageAffine(texture, m_LandmarkerInput, M2);
 
             // Calculate transform matrix for segmentation
             Matrix4x4 finalTransform = CalculateTransformMatrix(M2, landmarkerInputSize);
@@ -584,7 +592,7 @@ public class PoseDetection : MonoBehaviour
         for (var i = 0; i < k_NumKeypoints; i++)
         {
             // Each landmark is represented by 5 numbers: x, y, z, visibility, presence
-            var position_ImageSpace = BlazeUtils.mul(M2, new float2(landmarks[5 * i + 0], landmarks[5 * i + 1]));
+            var position_ImageSpace = BlazeUtilsHand.mul(M2, new float2(landmarks[5 * i + 0], landmarks[5 * i + 1]));
             var visibility = landmarks[5 * i + 3];
             var presence = landmarks[5 * i + 4];
 
@@ -627,6 +635,13 @@ public class PoseDetection : MonoBehaviour
                 filteredPosition = kalmanFilters[i].Update(filteredPosition);
             }
 
+            if (!spheresVisible)
+            {
+                jointSpheres[i].SetActive(false);
+            }
+            else jointSpheres[i].SetActive(true);
+
+
             // Set the sphere's position to the filtered result
             jointSpheres[i].transform.localPosition = filteredPosition * scaleFactor;
             keypoints[i] = filteredPosition;
@@ -639,6 +654,59 @@ public class PoseDetection : MonoBehaviour
             jointSpheres[i].transform.localScale = Vector3.one * adjustedSize;
         }
     }
+
+    /// <summary>
+    /// Returns the cropped texture centered on the detected person.
+    /// This texture can be used for hand detection.
+    /// </summary>
+    /// <returns>Texture2D containing the cropped image of the person, or null if not available</returns>
+    public Texture2D GetPersonCroppedTexture()
+    {
+        // Check if we have a valid detection
+        if (!isPersonCropReady || m_LandmarkerInput == null)
+        {
+            return null;
+        }
+
+        // Create the texture if it hasn't been created yet
+        if (personCropTexture == null || !textureInitialized)
+        {
+            personCropTexture = new Texture2D(landmarkerInputSize, landmarkerInputSize, TextureFormat.RGB24, false);
+            textureInitialized = true;
+        }
+
+        // Copy data from the landmark input tensor to the texture
+        float[] tensorData = m_LandmarkerInput.DownloadToArray();
+
+        // Create a color array to hold all pixels
+        Color[] pixels = new Color[landmarkerInputSize * landmarkerInputSize];
+
+        for (int y = 0; y < landmarkerInputSize; y++)
+        {
+            for (int x = 0; x < landmarkerInputSize; x++)
+            {
+                // Calculate the index in the flattened tensor data array
+                int tensorIndex = ((0 * landmarkerInputSize + y) * landmarkerInputSize + x) * 3;
+
+                // RGB values are in the range [0,1] in the tensor
+                float r = tensorData[tensorIndex];
+                float g = tensorData[tensorIndex + 1];
+                float b = tensorData[tensorIndex + 2];
+
+                // Set the pixel in the flipped Y coordinate because texture coordinates
+                // start from bottom-left, while the tensor starts from top-left
+                int pixelIndex = x + (landmarkerInputSize - y - 1) * landmarkerInputSize;
+                pixels[pixelIndex] = new Color(r, g, b);
+            }
+        }
+
+        // Apply all pixels at once for better performance
+        personCropTexture.SetPixels(pixels);
+        personCropTexture.Apply();
+
+        return personCropTexture;
+    }
+
 
     void OnDestroy()
     {

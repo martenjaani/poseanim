@@ -70,6 +70,31 @@ public static class BlazeUtils
         return (bestScoreIndex, selectedScores, selectedBoxes);
     }
 
+    public static (FunctionalTensor, FunctionalTensor, FunctionalTensor) NMSFiltering(FunctionalTensor rawBoxes, FunctionalTensor rawScores, FunctionalTensor anchors, float inputSize, float iouThreshold, float scoreThreshold)
+    {
+        var xCenter = rawBoxes[0, .., 0] + anchors[.., 0] * inputSize;
+        var yCenter = rawBoxes[0, .., 1] + anchors[.., 1] * inputSize;
+
+        var widthHalf = 0.5f * rawBoxes[0, .., 2];
+        var heightHalf = 0.5f * rawBoxes[0, .., 3];
+
+        var nmsBoxes = Functional.Stack(new[]
+        {
+            yCenter - heightHalf,
+            xCenter - widthHalf,
+            yCenter + heightHalf,
+            xCenter + widthHalf
+        }, 1);
+
+        var nmsScores = Functional.Squeeze(ScoreFiltering(rawScores, 100f));
+        var selectedIndices = Functional.NMS(nmsBoxes, nmsScores, iouThreshold, scoreThreshold); // (N);
+
+        var selectedBoxes = Functional.IndexSelect(rawBoxes, 1, selectedIndices).Unsqueeze(0); // (1, N, 16)
+        var selectedScores = Functional.IndexSelect(rawScores, 1, selectedIndices).Unsqueeze(0); // (1, N, 1)
+
+        return (selectedIndices, selectedScores, selectedBoxes);
+    }
+
     // image transform utility
     static ComputeShader s_ImageTransformShader = Resources.Load<ComputeShader>("ComputeShaders/ImageTransform");
     static int s_ImageSample = s_ImageTransformShader.FindKernel("ImageSample");
