@@ -33,9 +33,9 @@ public class PoseDetection : MonoBehaviour
     Tensor<float> m_LandmarkerInput;
     Awaitable m_DetectAwaitable;
 
-    private Texture2D personCropTexture;
-    public bool isPersonCropReady = false;
-    private bool textureInitialized = false;
+    //private Texture2D personCropTexture;
+    //public bool isPersonCropReady = false;
+    //private bool textureInitialized = false;
 
 
     float m_TextureWidth;
@@ -653,59 +653,9 @@ public class PoseDetection : MonoBehaviour
             float adjustedSize = Mathf.Lerp(minSize, maxSize, normalizedConfidence);
             jointSpheres[i].transform.localScale = Vector3.one * adjustedSize;
         }
+        //isPersonCropReady = true;
     }
 
-    /// <summary>
-    /// Returns the cropped texture centered on the detected person.
-    /// This texture can be used for hand detection.
-    /// </summary>
-    /// <returns>Texture2D containing the cropped image of the person, or null if not available</returns>
-    public Texture2D GetPersonCroppedTexture()
-    {
-        // Check if we have a valid detection
-        if (!isPersonCropReady || m_LandmarkerInput == null)
-        {
-            return null;
-        }
-
-        // Create the texture if it hasn't been created yet
-        if (personCropTexture == null || !textureInitialized)
-        {
-            personCropTexture = new Texture2D(landmarkerInputSize, landmarkerInputSize, TextureFormat.RGB24, false);
-            textureInitialized = true;
-        }
-
-        // Copy data from the landmark input tensor to the texture
-        float[] tensorData = m_LandmarkerInput.DownloadToArray();
-
-        // Create a color array to hold all pixels
-        Color[] pixels = new Color[landmarkerInputSize * landmarkerInputSize];
-
-        for (int y = 0; y < landmarkerInputSize; y++)
-        {
-            for (int x = 0; x < landmarkerInputSize; x++)
-            {
-                // Calculate the index in the flattened tensor data array
-                int tensorIndex = ((0 * landmarkerInputSize + y) * landmarkerInputSize + x) * 3;
-
-                // RGB values are in the range [0,1] in the tensor
-                float r = tensorData[tensorIndex];
-                float g = tensorData[tensorIndex + 1];
-                float b = tensorData[tensorIndex + 2];
-
-                // Set the pixel in the flipped Y coordinate because texture coordinates
-                // start from bottom-left, while the tensor starts from top-left
-                int pixelIndex = x + (landmarkerInputSize - y - 1) * landmarkerInputSize;
-                pixels[pixelIndex] = new Color(r, g, b);
-            }
-        }
-
-        // Apply all pixels at once for better performance
-        personCropTexture.SetPixels(pixels);
-        personCropTexture.Apply();
-
-        return personCropTexture;
-    }
 
 
     void OnDestroy()

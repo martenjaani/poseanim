@@ -6,7 +6,7 @@ using static Mediapipe.VideoPreStreamCalculatorOptions.Types;
 
 public class WebcamInput : MonoBehaviour
 {
-    public RawImage rawImage; // Assign the RawImage in the Inspector
+    //public RawImage rawImage; // Assign the RawImage in the Inspector
     public int targetWidth;  // Desired width for the model
     public int targetHeight; // Desired height for the model
 
@@ -21,11 +21,11 @@ public class WebcamInput : MonoBehaviour
 
     void Start()
     {
-        if (rawImage == null)
-        {
-            Debug.LogError("RawImage is not assigned in WebcamCapture script.");
-            return;
-        }
+        //if (rawImage == null)
+        //{
+        //    Debug.LogError("RawImage is not assigned in WebcamCapture script.");
+        //    return;
+        //}
 
         // Initialize the webcam
         webCamTexture = new WebCamTexture();
@@ -34,8 +34,8 @@ public class WebcamInput : MonoBehaviour
         webCamTexture.Play();
 
         // Assign the webcam texture to the RawImage
-        rawImage.texture = webCamTexture;
-        rawImage.material.mainTexture = webCamTexture;
+        //rawImage.texture = webCamTexture;
+        //rawImage.material.mainTexture = webCamTexture;
 
 
 
@@ -73,16 +73,16 @@ public class WebcamInput : MonoBehaviour
     }
 
     // Add this to WebcamInput to ensure consistent texture size
-    void Update()
-    {
-        if (isInitialized && webCamTexture.isPlaying)
-        {
-            // Ensure the RawImage displays the webcam correctly
-            float ratio = (float)webCamTexture.width / webCamTexture.height;
-            rawImage.rectTransform.sizeDelta = new Vector2(ratio * rawImage.rectTransform.sizeDelta.y,
-                                                          rawImage.rectTransform.sizeDelta.y);
-        }
-    }
+    //void Update()
+    //{
+    //    if (isInitialized && webCamTexture.isPlaying)
+    //    {
+    //        // Ensure the RawImage displays the webcam correctly
+    //        float ratio = (float)webCamTexture.width / webCamTexture.height;
+    //        rawImage.rectTransform.sizeDelta = new Vector2(ratio * rawImage.rectTransform.sizeDelta.y,
+    //                                                      rawImage.rectTransform.sizeDelta.y);
+    //    }
+    //}
 
     /// <summary>
     /// Returns the current resized texture.

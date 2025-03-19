@@ -11,7 +11,6 @@ public class AvatarController : MonoBehaviour
     // Add a reference to HandDetection
     public HandDetection handDetection;
 
-    private bool HandInverseSetup = true;
     [Range(0f, 1f)]
     public float smoothing = 0.7f; // Smoothing factor for rotations
 

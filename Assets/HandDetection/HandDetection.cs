@@ -24,12 +24,10 @@ public class HandDetection : MonoBehaviour
     [Range(1, 4)]
     public int maxHands = 2;
 
-    public PoseDetection poseDetection;
-    public bool usePersonCrop = true;
-    private bool isProcessingFrame = false;
 
-    public Material cropDebugMat;
-    public RawImage debugImg;
+    [Header("Segmentation Integration")]
+    public SegmentationRenderer segmentationRenderer;
+    public bool useSegmentedPersonTexture = true;
 
     // Spheres to visualize each keypoint
     public GameObject spherePrefabRight;
@@ -76,6 +74,23 @@ public class HandDetection : MonoBehaviour
     private KalmanFilter3D[] kalmanFiltersRight;
     private KalmanFilter3D[] kalmanFiltersLeft;
 
+    [Header("One Euro Filtering")]
+    [Tooltip("Enable/disable One Euro filtering")]
+    public bool useOneEuroFilter = true;
+    [Tooltip("Minimum cutoff frequency")]
+    [Range(0.1f, 5.0f)]
+    public float minCutoff = 1.0f;
+    [Tooltip("Cutoff slope (higher = more aggressive filtering of fast movements)")]
+    [Range(0, 0.1f)]
+    public float beta = 0.007f;
+    [Tooltip("Derivative cutoff frequency")]
+    [Range(0.1f, 5.0f)]
+    public float dCutoff = 1.0f;
+
+    // Add these private fields
+    private OneEuroFilter[] oneEuroFiltersRight;
+    private OneEuroFilter[] oneEuroFiltersLeft;
+
     // Output keypoint positions for right and left hands
     [Header("Hand Data")]
     public Vector3[] rightHandKeypoints = new Vector3[k_NumKeypoints];
@@ -91,7 +106,7 @@ public class HandDetection : MonoBehaviour
 
     [Tooltip("Scale factor for visualization")]
     public float scaleFactor = 20.0f;
-
+    public bool showSpheres = false;
     [Header("Debug")]
     public bool showDebugInfo = false;
 
@@ -127,6 +142,20 @@ public class HandDetection : MonoBehaviour
         for (int i = 0; i < k_NumKeypoints; i++)
         {
             kalmanFiltersLeft[i] = new KalmanFilter3D(Vector3.zero, kalmanInitialCovariance, kalmanProcessNoise, kalmanMeasurementNoise);
+        }
+
+        // Initialize One Euro Filters for right hand
+        oneEuroFiltersRight = new OneEuroFilter[k_NumKeypoints];
+        for (int i = 0; i < k_NumKeypoints; i++)
+        {
+            oneEuroFiltersRight[i] = new OneEuroFilter(minCutoff, beta, dCutoff);
+        }
+
+        // Initialize One Euro Filters for left hand
+        oneEuroFiltersLeft = new OneEuroFilter[k_NumKeypoints];
+        for (int i = 0; i < k_NumKeypoints; i++)
+        {
+            oneEuroFiltersLeft[i] = new OneEuroFilter(minCutoff, beta, dCutoff);
         }
 
         // Wait for webcam initialization
@@ -168,44 +197,32 @@ public class HandDetection : MonoBehaviour
         m_DetectorInput = new Tensor<float>(new TensorShape(1, detectorInputSize, detectorInputSize, 3));
         m_LandmarkerInput = new Tensor<float>(new TensorShape(1, landmarkerInputSize, landmarkerInputSize, 3));
 
+        Texture textureToProcess;
 
         // Detection loop
         while (true)
         {
             try
             {
-                if (isProcessingFrame)
+                if (useSegmentedPersonTexture && segmentationRenderer != null)
                 {
-                    // Skip this frame if we're still processing the previous one
-                    await Task.Delay(1);
-                    continue;
-                }
+                    // Try to get the person-only texture first
+                    textureToProcess = segmentationRenderer.GetPersonOnlyTexture();
 
-                isProcessingFrame = true;
 
-                // Determine which texture to use for detection
-                Texture textureToProcess;
-
-                if (usePersonCrop && poseDetection != null && poseDetection.isPersonCropReady)
-                {
-                    // Use the cropped person texture from pose detection
-                    textureToProcess = poseDetection.GetPersonCroppedTexture();
-
-                    // If the texture is null, fall back to webcam feed
+                    // Final fallback to webcam
                     if (textureToProcess == null)
                     {
                         textureToProcess = webcamInput.GetFeedFrameCopy();
+                        Debug.Log("Fallback");
                     }
+                    if (textureToProcess == null)
+                    {
+                        await Task.Delay(100);
+                    }
+                    m_DetectAwaitable = Detect(textureToProcess);
+                    await m_DetectAwaitable;
                 }
-                else
-                {
-                    // Use the full webcam feed
-                    textureToProcess = webcamInput.GetFeedFrameCopy();
-                }
-
-                m_DetectAwaitable = Detect(textureToProcess);
-                await m_DetectAwaitable;
-                isProcessingFrame = false;
             }
             catch (OperationCanceledException)
             {
@@ -214,7 +231,6 @@ public class HandDetection : MonoBehaviour
             catch (Exception e)
             {
                 Debug.LogError($"Error in hand detection: {e.Message}");
-                isProcessingFrame = false;
             }
         }
 
@@ -360,8 +376,23 @@ public class HandDetection : MonoBehaviour
                 position_WorldSpace.x *= -1;
                 position_WorldSpace.z *= -1;
 
+
                 // Apply Kalman filtering if enabled
                 Vector3 filteredPosition = position_WorldSpace;
+
+                // Apply One Euro filtering first (if enabled)
+                if (useOneEuroFilter)
+                {
+                    if (isRightHand && oneEuroFiltersRight != null && i < oneEuroFiltersRight.Length)
+                    {
+                        filteredPosition = oneEuroFiltersRight[i].Filter(filteredPosition);
+                    }
+                    else if (!isRightHand && oneEuroFiltersLeft != null && i < oneEuroFiltersLeft.Length)
+                    {
+                        filteredPosition = oneEuroFiltersLeft[i].Filter(filteredPosition);
+                    }
+                }
+
                 if (useKalmanFilter)
                 {
                     if (isRightHand && kalmanFiltersRight != null && i < kalmanFiltersRight.Length)
@@ -411,7 +442,7 @@ public class HandDetection : MonoBehaviour
                     if (i < jointSpheresLeft.Count)
                     {
                         jointSpheresLeft[i].transform.localPosition = filteredPosition * scaleFactor;
-                        jointSpheresLeft[i].SetActive(true);
+                        jointSpheresLeft[i].SetActive(showSpheres);
 
                         // Adjust size based on joint type
                         float baseSize = 0.5f;

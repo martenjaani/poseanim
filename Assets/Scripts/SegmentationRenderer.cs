@@ -21,10 +21,19 @@ public class SegmentationRenderer : MonoBehaviour
     private ComputeBuffer segBuffer;             // ComputeBuffer to hold segmentation data
     private bool isInitialized = false;
 
+
+
     // Learning rate parameters
     public float baseLearningRate = 0.01f;
     public float farDistanceFactor = 3.0f;
 
+
+    // Add these new fields to the SegmentationRenderer class
+    [Header("Person-Only Output")]
+    public bool generatePersonOnlyTexture = true;
+    public RawImage personOnlyDisplay;  // Optional UI display for person-only texture
+    public Material personOnlyMaterial;  // Material with PersonOnly shader
+    private RenderTexture personOnlyRT;  // Render texture for the person-only output
     // Kernel handles for compute shaders
     private int segmentationKernel;
     private int updateBackgroundKernel;
@@ -78,6 +87,20 @@ public class SegmentationRenderer : MonoBehaviour
             Debug.LogError("Background model compute shader not assigned!");
         }
 
+        // Initialize person-only render texture if enabled
+        if (generatePersonOnlyTexture)
+        {
+            personOnlyRT = new RenderTexture(webcamWidth, webcamHeight, 0, RenderTextureFormat.ARGB32);
+            personOnlyRT.enableRandomWrite = true;
+            personOnlyRT.Create();
+
+            // If a UI element is provided, assign the texture to it
+            if (personOnlyDisplay != null)
+            {
+                personOnlyDisplay.texture = personOnlyRT;
+            }
+        }
+
         // Assign the output to the display UI element
         outputDisplay.texture = outputRT;
 
@@ -114,6 +137,18 @@ public class SegmentationRenderer : MonoBehaviour
                 mat.SetTexture("_MaskTex", segmentationRT);
                 mat.SetTexture("_BgTex", backgroundModelRT);
                 mat.SetMatrix("_InvTransform", transformMatrix);
+            }
+
+            // Generate the person-only texture if enabled
+            if (generatePersonOnlyTexture && personOnlyMaterial != null)
+            {
+                // Set the material properties
+                personOnlyMaterial.SetTexture("_MainTex", webcamTexture);
+                personOnlyMaterial.SetTexture("_MaskTex", segmentationRT);
+                personOnlyMaterial.SetMatrix("_InvTransform", transformMatrix);
+
+                // Render to the person-only render texture
+                Graphics.Blit(webcamTexture, personOnlyRT, personOnlyMaterial);
             }
         }
         catch (System.Exception e)
@@ -239,6 +274,22 @@ public class SegmentationRenderer : MonoBehaviour
             Debug.LogError("Error in UpdateRawWebcamFeed: " + e.Message);
         }
     }
+
+    /// <summary>
+    /// Gets the render texture containing only the person from the webcam feed.
+    /// This can be used for hand detection to ensure it's processing only the detected person.
+    /// </summary>
+    /// <returns>RenderTexture with the person isolated or null if not available</returns>
+    public RenderTexture GetPersonOnlyTexture()
+    {
+        if (!isInitialized || !generatePersonOnlyTexture)
+        {
+            return null;
+        }
+
+        return personOnlyRT;
+    }
+
     /// <summary>
     /// Clean up resources when the component is destroyed
     /// </summary>
@@ -267,6 +318,12 @@ public class SegmentationRenderer : MonoBehaviour
             outputRT.Release();
             outputRT = null;
         }
+        if (personOnlyRT != null)
+        {
+            personOnlyRT.Release();
+            personOnlyRT = null;
+        }
+
     }
     
     /// <summary>
