@@ -43,6 +43,29 @@ public class FingerAnimatorLite : MonoBehaviour
 
     }
 
+    // Joint name constants
+    // private const string RIGHT_HAND_THUMB_1 = "mixamorig:RightHandThumb1";
+    private const string RIGHT_HAND_THUMB_1 = "Character1_RightHandThumb1";
+    // private const string RIGHT_HAND_INDEX_1 = "mixamorig:RightHandIndex1";
+    private const string RIGHT_HAND_INDEX_1 = "Character1_RightHandIndex1";
+    // private const string RIGHT_HAND_MIDDLE_1 = "mixamorig:RightHandMiddle1"; 
+    private const string RIGHT_HAND_MIDDLE_1 = "Character1_RightHandMiddle1";
+    // private const string RIGHT_HAND_RING_1 = "mixamorig:RightHandRing1";
+    private const string RIGHT_HAND_RING_1 = "Character1_RightHandRing1";
+    // private const string RIGHT_HAND_PINKY_1 = "mixamorig:RightHandPinky1";
+    private const string RIGHT_HAND_PINKY_1 = "Character1_RightHandPinky1";
+
+    // private const string LEFT_HAND_THUMB_1 = "mixamorig:LeftHandThumb1";
+    private const string LEFT_HAND_THUMB_1 = "Character1_LeftHandThumb1";
+    // private const string LEFT_HAND_INDEX_1 = "mixamorig:LeftHandIndex1";
+    private const string LEFT_HAND_INDEX_1 = "Character1_LeftHandIndex1";
+    // private const string LEFT_HAND_MIDDLE_1 = "mixamorig:LeftHandMiddle1";
+    private const string LEFT_HAND_MIDDLE_1 = "Character1_LeftHandMiddle1";
+    // private const string LEFT_HAND_RING_1 = "mixamorig:LeftHandRing1";
+    private const string LEFT_HAND_RING_1 = "Character1_LeftHandRing1";
+    // private const string LEFT_HAND_PINKY_1 = "mixamorig:LeftHandPinky1";
+    private const string LEFT_HAND_PINKY_1 = "Character1_LeftHandPinky1";
+
     private void Start()
     {
         if (avatarController == null || handDetection == null)
@@ -97,17 +120,17 @@ public class FingerAnimatorLite : MonoBehaviour
         }
 
         // Find the base finger joints in AvatarController's bones
-        if (bones.TryGetValue("mixamorig:RightHandThumb1", out var bone)) fingerChains["RightThumb"].proximal = bone.Transform;
-        if (bones.TryGetValue("mixamorig:RightHandIndex1", out bone)) fingerChains["RightIndex"].proximal = bone.Transform;
-        if (bones.TryGetValue("mixamorig:RightHandMiddle1", out bone)) fingerChains["RightMiddle"].proximal = bone.Transform;
-        if (bones.TryGetValue("mixamorig:RightHandRing1", out bone)) fingerChains["RightRing"].proximal = bone.Transform;
-        if (bones.TryGetValue("mixamorig:RightHandPinky1", out bone)) fingerChains["RightPinky"].proximal = bone.Transform;
+        if (bones.TryGetValue(RIGHT_HAND_THUMB_1, out var bone)) fingerChains["RightThumb"].proximal = bone.Transform;
+        if (bones.TryGetValue(RIGHT_HAND_INDEX_1, out bone)) fingerChains["RightIndex"].proximal = bone.Transform;
+        if (bones.TryGetValue(RIGHT_HAND_MIDDLE_1, out bone)) fingerChains["RightMiddle"].proximal = bone.Transform;
+        if (bones.TryGetValue(RIGHT_HAND_RING_1, out bone)) fingerChains["RightRing"].proximal = bone.Transform;
+        if (bones.TryGetValue(RIGHT_HAND_PINKY_1, out bone)) fingerChains["RightPinky"].proximal = bone.Transform;
 
-        if (bones.TryGetValue("mixamorig:LeftHandThumb1", out bone)) fingerChains["LeftThumb"].proximal = bone.Transform;
-        if (bones.TryGetValue("mixamorig:LeftHandIndex1", out bone)) fingerChains["LeftIndex"].proximal = bone.Transform;
-        if (bones.TryGetValue("mixamorig:LeftHandMiddle1", out bone)) fingerChains["LeftMiddle"].proximal = bone.Transform;
-        if (bones.TryGetValue("mixamorig:LeftHandRing1", out bone)) fingerChains["LeftRing"].proximal = bone.Transform;
-        if (bones.TryGetValue("mixamorig:LeftHandPinky1", out bone)) fingerChains["LeftPinky"].proximal = bone.Transform;
+        if (bones.TryGetValue(LEFT_HAND_THUMB_1, out bone)) fingerChains["LeftThumb"].proximal = bone.Transform;
+        if (bones.TryGetValue(LEFT_HAND_INDEX_1, out bone)) fingerChains["LeftIndex"].proximal = bone.Transform;
+        if (bones.TryGetValue(LEFT_HAND_MIDDLE_1, out bone)) fingerChains["LeftMiddle"].proximal = bone.Transform;
+        if (bones.TryGetValue(LEFT_HAND_RING_1, out bone)) fingerChains["LeftRing"].proximal = bone.Transform;
+        if (bones.TryGetValue(LEFT_HAND_PINKY_1, out bone)) fingerChains["LeftPinky"].proximal = bone.Transform;
 
         // Find intermediate and distal joints by searching the hierarchy
         foreach (string finger in fingers)
@@ -170,8 +193,8 @@ public class FingerAnimatorLite : MonoBehaviour
     {
         // Get wrist and palm normal reference
         Transform rightWrist = null, leftWrist = null;
-        if (avatarController.Bones.TryGetValue("mixamorig:RightHand", out var bone)) rightWrist = bone.Transform;
-        if (avatarController.Bones.TryGetValue("mixamorig:LeftHand", out bone)) leftWrist = bone.Transform;
+        if (avatarController.Bones.TryGetValue("Character1_RightHand", out var bone)) rightWrist = bone.Transform;
+        if (avatarController.Bones.TryGetValue("Character1_LeftHand", out bone)) leftWrist = bone.Transform;
 
         // For each finger, calculate inverse rotations
         foreach (var entry in fingerChains)

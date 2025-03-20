@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TMPro;
 using Unity.Mathematics;
 using Unity.Sentis;
 using UnityEngine;
@@ -14,6 +16,20 @@ public class PoseDetection : MonoBehaviour
     public TextAsset anchorsCSV;
     public float scoreThreshold = 0.75f;
     public SegmentationRenderer segmentationRenderer;
+
+    public GameObject avatar;
+    public GameObject outputImage;
+    public GameObject inputImage;
+
+    // Add these fields to the PoseDetection class
+    [Header("Detection Feedback UI")]
+    public bool enableDetectionFeedback = true;
+    public CanvasGroup detectionFeedbackPanel;
+    public TextMeshProUGUI detectionFeedbackText;
+    public float feedbackDelay = 5.0f; // How many seconds before showing feedback
+    public float fadeDuration = 0.5f; // How quickly to fade in/out the feedback
+    private float noDetectionTimer = 0f;
+    private bool isFeedbackActive = false;
 
     // Spheres to visualize each keypoint
     public GameObject spherePrefab;
@@ -125,9 +141,29 @@ public class PoseDetection : MonoBehaviour
     public Text debugText;
 
     public async void Start()
-    {   
+    {
 
-  
+        // Initialize CanvasGroup properties
+        if (detectionFeedbackPanel != null)
+        {
+            // Start with panel invisible
+            detectionFeedbackPanel.alpha = 0f;
+            detectionFeedbackPanel.interactable = false;
+            detectionFeedbackPanel.blocksRaycasts = false;
+
+            Debug.Log("CanvasGroup initialized: " + detectionFeedbackPanel.gameObject.name);
+        }
+        else
+        {
+            Debug.LogError("Detection feedback panel is not assigned!");
+        }
+
+        if (detectionFeedbackText == null)
+        {
+            Debug.LogError("Detection feedback text is not assigned!");
+        }
+
+
         // Create a sphere for each keypoint
         for (int i = 0; i < k_NumKeypoints; i++)
         {
@@ -418,8 +454,37 @@ public class PoseDetection : MonoBehaviour
         // Reset tracking counter when running detection
         trackingFrameCount = 0;
 
+        // Handle UI feedback for detection status
         if (!scorePassesThreshold)
+        {
+            // Increment no-detection timer when score is below threshold
+            noDetectionTimer += Time.deltaTime;
+
+            // Show feedback if timer exceeds the delay and feedback isn't already active
+            if (enableDetectionFeedback && noDetectionTimer >= feedbackDelay && !isFeedbackActive)
+            {
+                Debug.Log("not visible");
+                avatar.SetActive(false);
+                outputImage.SetActive(false);
+                inputImage.SetActive(true);
+                ShowDetectionFeedback(true);
+                
+            }
             return;
+        }
+        else
+        {
+            avatar.SetActive(true);
+            outputImage.SetActive(true);
+            inputImage.SetActive(false);
+
+            // Reset timer and hide feedback when detection is successful
+            noDetectionTimer = 0f;
+            if (isFeedbackActive)
+            {
+                ShowDetectionFeedback(false);
+            }
+        }
 
         var idx = outputIdx[0];
         var anchorPosition = detectorInputSize * new float2(m_Anchors[idx, 0], m_Anchors[idx, 1]);
@@ -656,6 +721,48 @@ public class PoseDetection : MonoBehaviour
         //isPersonCropReady = true;
     }
 
+    // Add this method to the PoseDetection class
+    private void ShowDetectionFeedback(bool show)
+    {
+        if (detectionFeedbackPanel == null || detectionFeedbackText == null)
+            return;
+
+        // Set the feedback state
+        isFeedbackActive = show;
+        // Ensure panel is visible and in front
+        detectionFeedbackPanel.gameObject.SetActive(true);
+        detectionFeedbackPanel.transform.SetAsLastSibling();
+        // Set feedback text
+        if (show)
+        {
+            detectionFeedbackText.text = "Human not detected\nMake sure your whole body is captured";
+        }
+
+        // Start coroutine to animate the panel fade
+        //StopAllCoroutines();
+        StartCoroutine(AnimateFeedbackPanel(show));
+    }
+    // Add this coroutine to animate the fade
+    private IEnumerator AnimateFeedbackPanel(bool fadeIn)
+    {
+        float startAlpha = detectionFeedbackPanel.alpha;
+        float targetAlpha = fadeIn ? 0.8f : 0f; // Dim to 70% opacity when showing
+        float elapsedTime = 0f;
+
+        while (elapsedTime < fadeDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / fadeDuration);
+            detectionFeedbackPanel.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
+            yield return null;
+        }
+
+        detectionFeedbackPanel.alpha = targetAlpha;
+
+        // Enable/disable interaction based on visibility
+        detectionFeedbackPanel.interactable = fadeIn;
+        detectionFeedbackPanel.blocksRaycasts = fadeIn;
+    }
 
 
     void OnDestroy()

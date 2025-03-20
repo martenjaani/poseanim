@@ -15,41 +15,107 @@ public class AvatarController : MonoBehaviour
     public float smoothing = 0.7f; // Smoothing factor for rotations
 
     // Bone name constants (Mixamo) - Updated to include SPINE1, SPINE2 and corrected arm/shoulder names
-    private const string HIPS = "mixamorig:Hips";
-    private const string SPINE = "mixamorig:Spine";
-    private const string SPINE1 = "mixamorig:Spine1"; // Added SPINE1
-    private const string SPINE2 = "mixamorig:Spine2"; // Added SPINE2
-    private const string NECK = "mixamorig:Neck";
-    private const string HEAD = "mixamorig:Head";
-    private const string NOSE = "mixamorig:Nose";
-    private const string LEFT_SHOULDER = "mixamorig:LeftShoulder"; // Mixamo Shoulder is like Clavicle/Traps
-    private const string RIGHT_SHOULDER = "mixamorig:RightShoulder"; // Mixamo Shoulder is like Clavicle/Traps
-    private const string LEFT_ARM = "mixamorig:LeftArm"; // Mixamo Arm is Upper Arm
-    private const string RIGHT_ARM = "mixamorig:RightArm"; // Mixamo Arm is Upper Arm
-    private const string LEFT_FOREARM = "mixamorig:LeftForeArm";
-    private const string RIGHT_FOREARM = "mixamorig:RightForeArm";
-    private const string LEFT_HAND = "mixamorig:LeftHand";
-    private const string RIGHT_HAND = "mixamorig:RightHand";
-    private const string LEFT_UPLEG = "mixamorig:LeftUpLeg";
-    private const string RIGHT_UPLEG = "mixamorig:RightUpLeg";
-    private const string LEFT_LEG = "mixamorig:LeftLeg";
-    private const string RIGHT_LEG = "mixamorig:RightLeg";
-    private const string LEFT_FOOT = "mixamorig:LeftFoot";
-    private const string RIGHT_FOOT = "mixamorig:RightFoot";
-    private const string LEFT_PINKY_BASE = "mixamorig:LeftHandPinky1";
-    private const string LEFT_RING_BASE = "mixamorig:LeftHandRing1";
-    private const string LEFT_MIDDLE_BASE = "mixamorig:LeftHandMiddle1";
-    private const string LEFT_INDEX_BASE = "mixamorig:LeftHandIndex1";
-    private const string LEFT_THUMB_BASE = "mixamorig:LeftHandThumb1";
-    private const string RIGHT_PINKY_BASE = "mixamorig:RightHandPinky1";
-    private const string RIGHT_RING_BASE = "mixamorig:RightHandRing1";
-    private const string RIGHT_MIDDLE_BASE = "mixamorig:RightHandMiddle1";
-    private const string RIGHT_INDEX_BASE = "mixamorig:RightHandIndex1";
-    private const string RIGHT_THUMB_BASE = "mixamorig:RightHandThumb1";
-    private const string LEFT_TOEBASE = "mixamorig:LeftToe_End";
-    private const string RIGHT_TOEBASE = "mixamorig:RightToe_End";
+    //private const string HIPS = "mixamorig:Hips";
+    //private const string SPINE = "mixamorig:Spine";
+    //private const string SPINE1 = "mixamorig:Spine1"; // Added SPINE1
+    //private const string SPINE2 = "mixamorig:Spine2"; // Added SPINE2
+    //private const string NECK = "mixamorig:Neck";
+    //private const string HEAD = "mixamorig:Head";
+    //private const string NOSE = "mixamorig:Nose";
+    //private const string LEFT_SHOULDER = "mixamorig:LeftShoulder"; // Mixamo Shoulder is like Clavicle/Traps
+    //private const string RIGHT_SHOULDER = "mixamorig:RightShoulder"; // Mixamo Shoulder is like Clavicle/Traps
+    //private const string LEFT_ARM = "mixamorig:LeftArm"; // Mixamo Arm is Upper Arm
+    //private const string RIGHT_ARM = "mixamorig:RightArm"; // Mixamo Arm is Upper Arm
+    //private const string LEFT_FOREARM = "mixamorig:LeftForeArm";
+    //private const string RIGHT_FOREARM = "mixamorig:RightForeArm";
+    //private const string LEFT_HAND = "mixamorig:LeftHand";
+    //private const string RIGHT_HAND = "mixamorig:RightHand";
+    //private const string LEFT_UPLEG = "mixamorig:LeftUpLeg";
+    //private const string RIGHT_UPLEG = "mixamorig:RightUpLeg";
+    //private const string LEFT_LEG = "mixamorig:LeftLeg";
+    //private const string RIGHT_LEG = "mixamorig:RightLeg";
+    //private const string LEFT_FOOT = "mixamorig:LeftFoot";
+    //private const string RIGHT_FOOT = "mixamorig:RightFoot";
+    //private const string LEFT_PINKY_BASE = "mixamorig:LeftHandPinky1";
+    //private const string LEFT_RING_BASE = "mixamorig:LeftHandRing1";
+    //private const string LEFT_MIDDLE_BASE = "mixamorig:LeftHandMiddle1";
+    //private const string LEFT_INDEX_BASE = "mixamorig:LeftHandIndex1";
+    //private const string LEFT_THUMB_BASE = "mixamorig:LeftHandThumb1";
+    //private const string RIGHT_PINKY_BASE = "mixamorig:RightHandPinky1";
+    //private const string RIGHT_RING_BASE = "mixamorig:RightHandRing1";
+    //private const string RIGHT_MIDDLE_BASE = "mixamorig:RightHandMiddle1";
+    //private const string RIGHT_INDEX_BASE = "mixamorig:RightHandIndex1";
+    //private const string RIGHT_THUMB_BASE = "mixamorig:RightHandThumb1";
+    //private const string LEFT_TOEBASE = "mixamorig:LeftToe_End";
+    //private const string RIGHT_TOEBASE = "mixamorig:RightToe_End";
 
-
+    // Bone name constants
+    // private const string HIPS = "mixamorig:Hips";
+    private const string HIPS = "Character1_Hips";
+    // private const string SPINE = "mixamorig:Spine";
+    private const string SPINE = "Character1_Spine";
+    // private const string SPINE1 = "mixamorig:Spine1";
+    private const string SPINE1 = "Character1_Spine1";
+    // private const string SPINE2 = "mixamorig:Spine2";
+    private const string SPINE2 = "Character1_Spine2";
+    // private const string NECK = "mixamorig:Neck";
+    private const string NECK = "Character1_Neck";
+    // private const string HEAD = "mixamorig:Head";
+    private const string HEAD = "Character1_Head";
+    // private const string NOSE = "mixamorig:Nose";
+    private const string NOSE = "Locator_Head_Above";
+    // private const string LEFT_SHOULDER = "mixamorig:LeftShoulder";
+    private const string LEFT_SHOULDER = "Character1_LeftShoulder";
+    // private const string RIGHT_SHOULDER = "mixamorig:RightShoulder";
+    private const string RIGHT_SHOULDER = "Character1_RightShoulder";
+    // private const string LEFT_ARM = "mixamorig:LeftArm";
+    private const string LEFT_ARM = "Character1_LeftArm";
+    // private const string RIGHT_ARM = "mixamorig:RightArm";
+    private const string RIGHT_ARM = "Character1_RightArm";
+    // private const string LEFT_FOREARM = "mixamorig:LeftForeArm";
+    private const string LEFT_FOREARM = "Character1_LeftForeArm";
+    // private const string RIGHT_FOREARM = "mixamorig:RightForeArm";
+    private const string RIGHT_FOREARM = "Character1_RightForeArm";
+    // private const string LEFT_HAND = "mixamorig:LeftHand";
+    private const string LEFT_HAND = "Character1_LeftHand";
+    // private const string RIGHT_HAND = "mixamorig:RightHand";
+    private const string RIGHT_HAND = "Character1_RightHand";
+    // private const string LEFT_UPLEG = "mixamorig:LeftUpLeg";
+    private const string LEFT_UPLEG = "Character1_LeftUpLeg";
+    // private const string RIGHT_UPLEG = "mixamorig:RightUpLeg";
+    private const string RIGHT_UPLEG = "Character1_RightUpLeg";
+    // private const string LEFT_LEG = "mixamorig:LeftLeg";
+    private const string LEFT_LEG = "Character1_LeftLeg";
+    // private const string RIGHT_LEG = "mixamorig:RightLeg";
+    private const string RIGHT_LEG = "Character1_RightLeg";
+    // private const string LEFT_FOOT = "mixamorig:LeftFoot";
+    private const string LEFT_FOOT = "Character1_LeftFoot";
+    // private const string RIGHT_FOOT = "mixamorig:RightFoot";
+    private const string RIGHT_FOOT = "Character1_RightFoot";
+    // private const string LEFT_PINKY_BASE = "mixamorig:LeftHandPinky1";
+    private const string LEFT_PINKY_BASE = "Character1_LeftHandPinky1";
+    // private const string LEFT_RING_BASE = "mixamorig:LeftHandRing1";
+    private const string LEFT_RING_BASE = "Character1_LeftHandRing1";
+    // private const string LEFT_MIDDLE_BASE = "mixamorig:LeftHandMiddle1";
+    private const string LEFT_MIDDLE_BASE = "Character1_LeftHandMiddle1";
+    // private const string LEFT_INDEX_BASE = "mixamorig:LeftHandIndex1";
+    private const string LEFT_INDEX_BASE = "Character1_LeftHandIndex1";
+    // private const string LEFT_THUMB_BASE = "mixamorig:LeftHandThumb1";
+    private const string LEFT_THUMB_BASE = "Character1_LeftHandThumb1";
+    // private const string RIGHT_PINKY_BASE = "mixamorig:RightHandPinky1";
+    private const string RIGHT_PINKY_BASE = "Character1_RightHandPinky1";
+    // private const string RIGHT_RING_BASE = "mixamorig:RightHandRing1";
+    private const string RIGHT_RING_BASE = "Character1_RightHandRing1";
+    // private const string RIGHT_MIDDLE_BASE = "mixamorig:RightHandMiddle1";
+    private const string RIGHT_MIDDLE_BASE = "Character1_RightHandMiddle1";
+    // private const string RIGHT_INDEX_BASE = "mixamorig:RightHandIndex1";
+    private const string RIGHT_INDEX_BASE = "Character1_RightHandIndex1";
+    // private const string RIGHT_THUMB_BASE = "mixamorig:RightHandThumb1";
+    private const string RIGHT_THUMB_BASE = "Character1_RightHandThumb1";
+    // private const string LEFT_TOEBASE = "mixamorig:LeftToe_End";
+    private const string LEFT_TOEBASE = "Character1_LeftToeBase";
+    // private const string RIGHT_TOEBASE = "mixamorig:RightToe_End";
+    private const string RIGHT_TOEBASE = "Character1_RightToeBase";
 
     // BlazePose keypoint indices
     private const int NOSE_INDEX = 0;
@@ -110,9 +176,9 @@ public class AvatarController : MonoBehaviour
 
     }
     // Move in z direction
-    private float centerTall = 200 * 0.75f;
-    private float tall = 200 * 0.75f;
-    private float prevTall = 200 * 0.75f;
+    //private float centerTall = 200;
+    private float tall;
+    private float prevTall;
     //public float ZScaleOffset = -0.3f;
     //public float ZTrueScale = 0.47f; //hea kui 0.1 - 0.5
 
@@ -182,7 +248,7 @@ public class AvatarController : MonoBehaviour
         // SetBoneChildren(NECK, HEAD);
 
         SetBoneChildren(SPINE, NECK); //wierd
-        SetBoneChildren(NECK, HEAD); //wierd
+        //SetBoneChildren(NECK, HEAD); //wierd
 
         // Right Arm - Corrected hierarchy and bone names
         SetBoneChildren(RIGHT_SHOULDER, RIGHT_ARM);     // Shoulder (Clavicle) -> Arm (Upper Arm)
@@ -244,14 +310,14 @@ public class AvatarController : MonoBehaviour
             hipBone.InverseRotation = Quaternion.Inverse(Quaternion.LookRotation(forward)) * hipBone.InitRotation;
         }
 
-        if (bones.ContainsKey(HEAD))
-        {
-            Bone headBone = bones[HEAD];
-            headBone.InitRotation = headBone.Transform.rotation;
-            var gaze = bones[NOSE].Transform.position - headBone.Transform.position;
-            headBone.InverseRotation = Quaternion.Inverse(Quaternion.LookRotation(gaze)) * headBone.InitRotation;
-
-        }
+        //if (bones.ContainsKey(HEAD))
+        //{
+        //    Bone headBone = bones[HEAD];
+        //    headBone.InitRotation = headBone.Transform.rotation;
+        //    var gaze = bones[NOSE].Transform.position - headBone.Transform.position;
+        //    headBone.InverseRotation = Quaternion.Inverse(Quaternion.LookRotation(gaze)) * headBone.InitRotation;
+        //
+        //}
 
      //   // Hand Specific Inverse Setup (same as before - with warnings)
      //   if (bones.ContainsKey(LEFT_HAND))
@@ -365,10 +431,10 @@ public class AvatarController : MonoBehaviour
         tall = height * 0.7f + prevTall * 0.3f;
         prevTall = tall;
 
-        if (tall == 0)
-        {
-            tall = centerTall;
-        }
+        //if (tall == 0)
+        //{
+        //    tall = centerTall;
+        //}
         //var zMovement = tall * (1 / ZTrueScale) + ZScaleOffset;
         //Debug.Log(zMovement);
 
@@ -417,9 +483,9 @@ public class AvatarController : MonoBehaviour
                 }
             }
         }
-        var gaze = bones[NOSE].KeypointPosition - bones[HEAD].KeypointPosition;
-        var f = TriangleNormal(bones[HEAD].KeypointPosition, GetKeypointOrZero(keypoints3D, LEFT_EAR_INDEX), GetKeypointOrZero(keypoints3D, RIGHT_EAR_INDEX));
-        bones[HEAD].Transform.rotation = Quaternion.LookRotation(gaze, f) * bones[HEAD].InverseRotation;
+        //var gaze = bones[NOSE].KeypointPosition - bones[HEAD].KeypointPosition;
+        //var f = TriangleNormal(bones[HEAD].KeypointPosition, GetKeypointOrZero(keypoints3D, LEFT_EAR_INDEX), GetKeypointOrZero(keypoints3D, RIGHT_EAR_INDEX));
+        //bones[HEAD].Transform.rotation = Quaternion.LookRotation(gaze, f);
 
 
         //var lHand = Bones[LEFT_HAND];

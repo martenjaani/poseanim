@@ -65,7 +65,7 @@ void UpdateBackground(uint3 id : SV_DispatchThreadID)
     
     // Search for nearby human pixels to calculate distance
     uint searchSteps = 10; // Number of steps to check for distance calculation
-    float minDistance = 1.0;
+    float minDistance = 10.0;
     
     // Check in a circular pattern around the current pixel
     for (uint step = 1; step <= searchSteps; step++)
@@ -103,11 +103,11 @@ void UpdateBackground(uint3 id : SV_DispatchThreadID)
     // Adjust learning rate based on distance from human
     // Far from human (distanceFromHuman = 1.0): fast update (use full _LearningRate)
     // Close to human (distanceFromHuman near 0): very slow update
-    float adjustedLearningRate = _LearningRate * pow(distanceFromHuman, 0.5);
+    float adjustedLearningRate = 0;
     
     // Extra boost for far away pixels
     if (distanceFromHuman > 0.8)
-        adjustedLearningRate = _LearningRate * _FarDistanceFactor; // Much faster for distant pixels
+        adjustedLearningRate = _LearningRate; // Much faster for distant pixels
     
     // Update the background model with adjusted learning rate
     float4 currentBg = BackgroundModel[id.xy];
@@ -151,17 +151,7 @@ void ApplyBackground(uint3 id : SV_DispatchThreadID)
     // Make sure alpha is 1.0
     bgPixel.a = 1.0;
     
-    // If background is very dark/transparent (not yet populated),
-    // use the fallback color
-    float luminance = dot(bgPixel.rgb, float3(0.2126, 0.7152, 0.0722));
-    if (luminance < 0.01)
-    {
-        OutputTexture[id.xy] = _FallbackColor;
-    }
-    else
-    {
-        OutputTexture[id.xy] = bgPixel;
-    }
+
 }
 
 // UpdateFullBackground kernel: Updates the entire background model

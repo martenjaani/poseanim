@@ -125,7 +125,7 @@ Material:
     - _DebugMode: 0
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DilationAmount: 0.0122
+    - _DilationAmount: 0.0152
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1

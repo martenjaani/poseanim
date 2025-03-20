@@ -10,6 +10,8 @@ public class WebcamInput : MonoBehaviour
     public int targetWidth;  // Desired width for the model
     public int targetHeight; // Desired height for the model
 
+    public RawImage rawImage;
+
     public int WebcamID = 1;
 
     private WebCamTexture webCamTexture;
@@ -34,8 +36,8 @@ public class WebcamInput : MonoBehaviour
         webCamTexture.Play();
 
         // Assign the webcam texture to the RawImage
-        //rawImage.texture = webCamTexture;
-        //rawImage.material.mainTexture = webCamTexture;
+        rawImage.texture = webCamTexture;
+        rawImage.material.mainTexture = webCamTexture;
 
 
 

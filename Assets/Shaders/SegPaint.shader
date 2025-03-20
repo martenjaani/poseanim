@@ -100,11 +100,6 @@ Shader "SegPaint"
                 // Determine the replacement color (either dynamic background or solid color)
                 fixed4 replacementColor = _UseDynamicBg ? bgColor : _BackgroundColor;
                 
-                // Check if background pixel is too dark/empty, use fallback color if needed
-                float bgLuminance = dot(bgColor.rgb, float3(0.2126, 0.7152, 0.0722));
-                if (_UseDynamicBg && bgLuminance < 0.02) {
-                    replacementColor = _BackgroundColor;
-                }
                 
                 // Composite the final color - blend between webcam and replacement color
                 fixed4 finalColor = lerp(camColor, replacementColor, blend);
