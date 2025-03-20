@@ -15,6 +15,12 @@ public class FingerAnimatorLite : MonoBehaviour
     [Range(0f, 1f)]
     public float smoothing = 0.5f;
 
+    [Header("Rotation Adjustments")]
+    public Vector3 proximalRotationOffset = new Vector3(0, 0, 0); // Inspector-configurable offsets
+    public Vector3 intermediateRotationOffset = new Vector3(0, 0, 0);
+    public Vector3 distalRotationOffset = new Vector3(0, 0, 0);
+    public Vector3 tipRotationOffset = new Vector3(0, 0, 0);
+
     [Header("Debug")]
     public bool showDebugGizmos = false;
     public bool logDebugInfo = false;
@@ -40,7 +46,6 @@ public class FingerAnimatorLite : MonoBehaviour
         public Quaternion intermediateInit;
         public Quaternion distalInit;
         public Quaternion tipInit;
-
     }
 
     // Joint name constants
@@ -230,8 +235,8 @@ public class FingerAnimatorLite : MonoBehaviour
                 );
             }
 
-            // Calculate joint directions in rest pose
-            Vector3 proxToInter = chain.proximal.position - chain.intermediate.position;
+            // Calculate joint directions in rest pose - parent to child direction
+            Vector3 proxToInter = chain.intermediate.position - chain.proximal.position;
 
             // Set inverse rotations to maintain original pose
             chain.proximalInverse = Quaternion.Inverse(
@@ -240,22 +245,21 @@ public class FingerAnimatorLite : MonoBehaviour
 
             if (chain.distal != null && chain.tip != null)
             {
-                Vector3 interToDist = chain.intermediate.position - chain.distal.position;
+                Vector3 interToDist = chain.distal.position - chain.intermediate.position;
                 chain.intermediateInverse = Quaternion.Inverse(
                     Quaternion.LookRotation(interToDist, palmNormal)
                 ) * chain.intermediateInit;
 
-                // For distal (last joint) we have to estimate a direction
-                Vector3 distToEnd = interToDist.normalized; // Assume same direction as previous segment
+                // For distal joint
+                Vector3 distToTip = chain.tip.position - chain.distal.position;
                 chain.distalInverse = Quaternion.Inverse(
-                    Quaternion.LookRotation(distToEnd, palmNormal)
+                    Quaternion.LookRotation(distToTip, palmNormal)
                 ) * chain.distalInit;
 
-                Vector3 tipDir = interToDist.normalized;
+                Vector3 tipDir = distToTip.normalized;
                 chain.tipInverse = Quaternion.Inverse(
                     Quaternion.LookRotation(tipDir, palmNormal)
                 ) * chain.tipInit;
-
             }
         }
     }
@@ -404,33 +408,40 @@ public class FingerAnimatorLite : MonoBehaviour
                 Debug.Log($"Applying rotations to {fingerName}");
             }
 
-            // Apply rotation to proximal joint (MCP)
-            Vector3 mcpToPip = (mcpPos - pipPos).normalized;
-            Quaternion proximalTarget = Quaternion.LookRotation(mcpToPip, palmNormal) * chain.proximalInverse;
+            // Apply rotation to proximal joint (MCP) with offset
+            Vector3 mcpToPip = (pipPos - mcpPos).normalized;
+            Quaternion baseRotation = Quaternion.LookRotation(mcpToPip, palmNormal);
+            Quaternion offsetRotation = Quaternion.Euler(proximalRotationOffset);
+            Quaternion proximalTarget = baseRotation * offsetRotation * chain.proximalInverse;
             chain.proximal.rotation = Quaternion.Slerp(chain.proximal.rotation, proximalTarget, smoothing);
 
-            // Apply rotation to intermediate joint (PIP)
+            // Apply rotation to intermediate joint (PIP) with offset
             if (chain.intermediate != null)
             {
-                Vector3 pipToDip = (pipPos - dipPos).normalized;
-                Quaternion intermediateTarget = Quaternion.LookRotation(pipToDip, palmNormal) * chain.intermediateInverse;
+                Vector3 pipToDip = (dipPos - pipPos).normalized;
+                baseRotation = Quaternion.LookRotation(pipToDip, palmNormal);
+                offsetRotation = Quaternion.Euler(intermediateRotationOffset);
+                Quaternion intermediateTarget = baseRotation * offsetRotation * chain.intermediateInverse;
                 chain.intermediate.rotation = Quaternion.Slerp(chain.intermediate.rotation, intermediateTarget, smoothing);
             }
 
-            // Apply rotation to distal joint (DIP)
+            // Apply rotation to distal joint (DIP) with offset
             if (chain.distal != null)
             {
-                Vector3 dipToTip = (dipPos - tipPos).normalized;
-                Quaternion distalTarget = Quaternion.LookRotation(dipToTip, palmNormal) * chain.distalInverse;
+                Vector3 dipToTip = (tipPos - dipPos).normalized;
+                baseRotation = Quaternion.LookRotation(dipToTip, palmNormal);
+                offsetRotation = Quaternion.Euler(distalRotationOffset);
+                Quaternion distalTarget = baseRotation * offsetRotation * chain.distalInverse;
                 chain.distal.rotation = Quaternion.Slerp(chain.distal.rotation, distalTarget, smoothing);
             }
+
+            // Apply rotation to tip joint with offset
             if (chain.tip != null)
             {
-                // The tip usually just follows the direction of the distal joint
-                // We can use the same direction or a slight variation
-                Vector3 dipToTip = (dipPos - tipPos).normalized;
-
-                Quaternion tipTarget = Quaternion.LookRotation(dipToTip, palmNormal) * chain.tipInverse;
+                Vector3 dipToTip = (tipPos - dipPos).normalized;
+                baseRotation = Quaternion.LookRotation(dipToTip, palmNormal);
+                offsetRotation = Quaternion.Euler(tipRotationOffset);
+                Quaternion tipTarget = baseRotation * offsetRotation * chain.tipInverse;
                 chain.tip.rotation = Quaternion.Slerp(chain.tip.rotation, tipTarget, smoothing);
             }
         }

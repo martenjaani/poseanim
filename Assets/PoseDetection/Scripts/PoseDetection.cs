@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Mathematics;
@@ -26,10 +27,18 @@ public class PoseDetection : MonoBehaviour
     public bool enableDetectionFeedback = true;
     public CanvasGroup detectionFeedbackPanel;
     public TextMeshProUGUI detectionFeedbackText;
-    public float feedbackDelay = 5.0f; // How many seconds before showing feedback
-    public float fadeDuration = 0.5f; // How quickly to fade in/out the feedback
-    private float noDetectionTimer = 0f;
+    [Tooltip("Number of frames to track for detection history")]
+    public int detectionHistoryLength = 60;
+    [Tooltip("Threshold score for considering a detection as failed")]
+    public float detectionFailThreshold = 0.6f;
+    [Tooltip("Percentage of failed detections required to show feedback (0-100%)")]
+    [Range(0, 100)]
+    public float failPercentageThreshold = 50f;
     private bool isFeedbackActive = false;
+    public float fadeDuration = 0.25f;
+    // Add these private variables
+    private Queue<float> detectionScoreHistory = new Queue<float>();
+    private int failedDetectionsCount = 0;
 
     // Spheres to visualize each keypoint
     public GameObject spherePrefab;
@@ -139,9 +148,14 @@ public class PoseDetection : MonoBehaviour
     [Header("Debug")]
     public bool showDebugInfo = false;
     public Text debugText;
+    private CancellationTokenSource cancellationTokenSource;
+
 
     public async void Start()
     {
+
+        detectionScoreHistory = new Queue<float>(detectionHistoryLength);
+        failedDetectionsCount = 0;
 
         // Initialize CanvasGroup properties
         if (detectionFeedbackPanel != null)
@@ -179,21 +193,41 @@ public class PoseDetection : MonoBehaviour
 
         InitializeModels();
 
-        while (webcamInput.GetFrame() == null)
+        cancellationTokenSource = new CancellationTokenSource();
+
+
+        try
         {
-            Debug.Log("Waiting for webcam initialization...");
-            await Task.Delay(100);
+            // Pass the token to all awaitable operations
+            // Wait for webcam initialization with cancellation support
+            while (webcamInput.GetFrame() == null || webcamInput.GetFeedFrameCopy() == null)
+            {
+                Debug.Log("Waiting for webcam initialization...");
+                await Task.Delay(100, cancellationTokenSource.Token);
+
+                // Check if we've been cancelled
+                cancellationTokenSource.Token.ThrowIfCancellationRequested();
+            }
+
+            // Other initialization code...
         }
+        catch (OperationCanceledException)
+        {
+            Debug.Log("Webcam initialization was cancelled");
+            return;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error during initialization: {e.Message}");
+            return;
+        }
+    
 
         imageTexture = webcamInput.GetFrame();
         m_TextureWidth = imageTexture.width;
         m_TextureHeight = imageTexture.height;
 
-        while (webcamInput.GetFeedFrameCopy() == null)
-        {
-            Debug.Log("Waiting for webcam initialization...");
-            await Task.Delay(100);
-        }
+
 
         if (segmentationRenderer != null)
         {
@@ -451,25 +485,21 @@ public class PoseDetection : MonoBehaviour
         previousScore = currentScore;
         var scorePassesThreshold = currentScore >= scoreThreshold;
 
+        // Update detection history
+        UpdateDetectionHistory(currentScore);
+
         // Reset tracking counter when running detection
         trackingFrameCount = 0;
 
-        // Handle UI feedback for detection status
-        if (!scorePassesThreshold)
+        // Handle UI feedback based on detection history
+        if (ShouldShowFeedback())
         {
-            // Increment no-detection timer when score is below threshold
-            noDetectionTimer += Time.deltaTime;
 
-            // Show feedback if timer exceeds the delay and feedback isn't already active
-            if (enableDetectionFeedback && noDetectionTimer >= feedbackDelay && !isFeedbackActive)
-            {
-                Debug.Log("not visible");
-                avatar.SetActive(false);
-                outputImage.SetActive(false);
-                inputImage.SetActive(true);
-                ShowDetectionFeedback(true);
-                
-            }
+            //Debug.Log($"Showing feedback - Failed detections: {failedDetectionsCount}/{detectionScoreHistory.Count} ({(failedDetectionsCount * 100f / detectionScoreHistory.Count):F1}%)");
+            avatar.SetActive(false);
+            outputImage.SetActive(false);
+            inputImage.SetActive(true);
+            ShowDetectionFeedback(true);
             return;
         }
         else
@@ -478,9 +508,8 @@ public class PoseDetection : MonoBehaviour
             outputImage.SetActive(true);
             inputImage.SetActive(false);
 
-            // Reset timer and hide feedback when detection is successful
-            noDetectionTimer = 0f;
-            if (isFeedbackActive)
+            // Hide feedback when detection is successful
+            if (isFeedbackActive && ShouldHideFeedback())
             {
                 ShowDetectionFeedback(false);
             }
@@ -581,9 +610,23 @@ public class PoseDetection : MonoBehaviour
             float trackingConfidence = CalculateTrackingConfidence(landmarks);
             previousScore = trackingConfidence;
 
+            UpdateDetectionHistory(trackingConfidence);
+
             // If confidence is too low, we'll trigger a full detection on the next frame
             if (trackingConfidence < trackingScoreThreshold)
             {
+                // Check if we should show feedback based on detection history
+                bool shouldShowFeedback = ShouldShowFeedback();
+
+                if (enableDetectionFeedback && shouldShowFeedback && !isFeedbackActive)
+                {
+                    Debug.Log($"Showing feedback (tracking) - Failed detections: {failedDetectionsCount}/{detectionScoreHistory.Count} ({(failedDetectionsCount * 100f / detectionScoreHistory.Count):F1}%)");
+                    avatar.SetActive(false);
+                    outputImage.SetActive(false);
+                    inputImage.SetActive(true);
+                    ShowDetectionFeedback(true);
+                }
+
                 trackingFrameCount = maxTrackingFrames; // Force detection next frame
 
                 // Update the background when confidence is low - it may mean the person left the frame
@@ -593,11 +636,17 @@ public class PoseDetection : MonoBehaviour
                 }
                 return;
             }
-
-            // Process segmentation in the separate renderer if available
-            if (segmentationRenderer != null)
+            else
             {
-                segmentationRenderer.UpdateSegmentation(segData, webcamInput.GetFeedFrameCopy(), finalTransform);
+                avatar.SetActive(true);
+                outputImage.SetActive(true);
+                inputImage.SetActive(false);
+
+                // Hide feedback when tracking is successful
+                if (isFeedbackActive && ShouldHideFeedback())
+                {
+                    ShowDetectionFeedback(false);
+                }
             }
 
             // Update keypoints with multi-stage filtering
@@ -649,6 +698,63 @@ public class PoseDetection : MonoBehaviour
         }
 
         return count > 0 ? totalConfidence / count : 0f;
+    }
+
+    // Add these new methods to handle detection history
+    private void UpdateDetectionHistory(float score)
+    {
+        // Add the new score to the history queue
+        if (detectionScoreHistory.Count >= detectionHistoryLength)
+        {
+            // Remove the oldest score and update the failed count if needed
+            float oldestScore = detectionScoreHistory.Dequeue();
+            if (oldestScore < detectionFailThreshold)
+            {
+                failedDetectionsCount--;
+            }
+        }
+
+        // Add the new score to the queue
+        detectionScoreHistory.Enqueue(score);
+
+        // Update the failed count if needed
+        if (score < detectionFailThreshold)
+        {
+            failedDetectionsCount++;
+        }
+
+        // Log detection history stats if debug enabled
+        if (showDebugInfo)
+        {
+            float failPercentage = detectionScoreHistory.Count > 0 ?
+                (failedDetectionsCount * 100f / detectionScoreHistory.Count) : 0;
+           // Debug.Log($"Detection History: {failedDetectionsCount}/{detectionScoreHistory.Count} failed ({failPercentage:F1}%)");
+        }
+    }
+
+    private bool ShouldShowFeedback()
+    {
+        // Don't show feedback if we don't have enough history
+        if (detectionScoreHistory.Count < detectionHistoryLength * 0.5f)
+        {
+            return false;
+        }
+
+        // Calculate the percentage of failed detections
+        float failPercentage = (failedDetectionsCount * 100f) / detectionScoreHistory.Count;
+
+        // Show feedback if the fail percentage exceeds the threshold
+        return failPercentage >= failPercentageThreshold;
+    }
+
+    private bool ShouldHideFeedback()
+    {
+        // Calculate the percentage of failed detections
+        float failPercentage = detectionScoreHistory.Count > 0 ?
+            (failedDetectionsCount * 100f / detectionScoreHistory.Count) : 0;
+
+        // Hide feedback if the fail percentage drops below the threshold with some hysteresis
+        return failPercentage < (failPercentageThreshold - 10f);
     }
 
     private void UpdateKeypoints(Tensor<float> landmarks, float2x3 M2)
@@ -767,7 +873,27 @@ public class PoseDetection : MonoBehaviour
 
     void OnDestroy()
     {
-        m_DetectAwaitable.Cancel();
+        // Cancel any pending operations
+        if (cancellationTokenSource != null)
+        {
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
+            cancellationTokenSource = null;
+        }
+
+        // Clean up other resources
+        if (m_DetectAwaitable != null)
+        {
+            m_DetectAwaitable.Cancel();
+        }
+        if (m_PoseDetectorWorker != null)
+        {
+            m_PoseDetectorWorker.Dispose();
+        }
+        if (m_PoseLandmarkerWorker != null)
+        {
+            m_PoseLandmarkerWorker.Dispose();
+        }
     }
 
     // Optional: Add a method to visualize the ROI for debugging

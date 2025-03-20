@@ -310,14 +310,14 @@ public class AvatarController : MonoBehaviour
             hipBone.InverseRotation = Quaternion.Inverse(Quaternion.LookRotation(forward)) * hipBone.InitRotation;
         }
 
-        //if (bones.ContainsKey(HEAD))
-        //{
-        //    Bone headBone = bones[HEAD];
-        //    headBone.InitRotation = headBone.Transform.rotation;
-        //    var gaze = bones[NOSE].Transform.position - headBone.Transform.position;
-        //    headBone.InverseRotation = Quaternion.Inverse(Quaternion.LookRotation(gaze)) * headBone.InitRotation;
-        //
-        //}
+        if (bones.ContainsKey(HEAD))
+        {
+            Bone headBone = bones[HEAD];
+            headBone.InitRotation = headBone.Transform.rotation;
+            var gaze = bones[NOSE].Transform.position - headBone.Transform.position;
+            headBone.InverseRotation = Quaternion.Inverse(Quaternion.LookRotation(gaze)) * headBone.InitRotation;
+        
+        }
 
      //   // Hand Specific Inverse Setup (same as before - with warnings)
      //   if (bones.ContainsKey(LEFT_HAND))
@@ -429,6 +429,7 @@ public class AvatarController : MonoBehaviour
 
         // Low pass filter in z direction
         tall = height * 0.7f + prevTall * 0.3f;
+        tall = tall * 1.10f;
         prevTall = tall;
 
         //if (tall == 0)
