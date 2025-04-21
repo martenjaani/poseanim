@@ -9,12 +9,12 @@ using System.Runtime.InteropServices;
 
 namespace Mediapipe
 {
-  internal static partial class UnsafeNativeMethods
-  {
-    [DllImport(MediaPipeLibrary)]
-    public static extern void glFlush();
+    internal static partial class UnsafeNativeMethods
+    {
+        [DllImport(MediaPipeLibrary)]
+        public static extern void glFlush();
 
-    [DllImport(MediaPipeLibrary)]
-    public static extern void glReadPixels(int x, int y, int width, int height, uint glFormat, uint glType, IntPtr pixels);
-  }
+        [DllImport(MediaPipeLibrary)]
+        public static extern void glReadPixels(int x, int y, int width, int height, uint glFormat, uint glType, IntPtr pixels);
+    }
 }

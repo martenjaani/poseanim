@@ -9,27 +9,27 @@ using UnityEngine;
 
 namespace Mediapipe.Unity
 {
-  public class MultiFaceLandmarkListAnnotationController : AnnotationController<MultiFaceLandmarkListAnnotation>
-  {
-    [SerializeField] private bool _visualizeZ = false;
-
-    private IReadOnlyList<NormalizedLandmarkList> _currentTarget;
-
-    public void DrawNow(IReadOnlyList<NormalizedLandmarkList> target)
+    public class MultiFaceLandmarkListAnnotationController : AnnotationController<MultiFaceLandmarkListAnnotation>
     {
-      _currentTarget = target;
-      SyncNow();
-    }
+        [SerializeField] private bool _visualizeZ = false;
 
-    public void DrawLater(IReadOnlyList<NormalizedLandmarkList> target)
-    {
-      UpdateCurrentTarget(target, ref _currentTarget);
-    }
+        private IReadOnlyList<NormalizedLandmarkList> _currentTarget;
 
-    protected override void SyncNow()
-    {
-      isStale = false;
-      annotation.Draw(_currentTarget, _visualizeZ);
+        public void DrawNow(IReadOnlyList<NormalizedLandmarkList> target)
+        {
+            _currentTarget = target;
+            SyncNow();
+        }
+
+        public void DrawLater(IReadOnlyList<NormalizedLandmarkList> target)
+        {
+            UpdateCurrentTarget(target, ref _currentTarget);
+        }
+
+        protected override void SyncNow()
+        {
+            isStale = false;
+            annotation.Draw(_currentTarget, _visualizeZ);
+        }
     }
-  }
 }

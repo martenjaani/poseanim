@@ -7,15 +7,15 @@ using System;
 
 namespace Mediapipe
 {
-  public class BadStatusException : Exception
-  {
-    public StatusCode statusCode { get; private set; }
-
-    public BadStatusException(string message) : base(message) { }
-
-    public BadStatusException(StatusCode statusCode, string message) : base(message)
+    public class BadStatusException : Exception
     {
-      this.statusCode = statusCode;
+        public StatusCode statusCode { get; private set; }
+
+        public BadStatusException(string message) : base(message) { }
+
+        public BadStatusException(StatusCode statusCode, string message) : base(message)
+        {
+            this.statusCode = statusCode;
+        }
     }
-  }
 }

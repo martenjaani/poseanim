@@ -6,23 +6,29 @@ using System.Threading.Tasks;
 using TMPro;
 using Unity.Mathematics;
 using Unity.Sentis;
+using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class PoseDetection : MonoBehaviour
 {
+    // Core components
     public WebcamInput webcamInput;
     public ModelAsset poseDetector;
     public ModelAsset poseLandmarker;
     public TextAsset anchorsCSV;
     public float scoreThreshold = 0.75f;
     public SegmentationRenderer segmentationRenderer;
+    public PosePreview posePreview;
 
+    // Display objects
     public GameObject avatar;
     public GameObject outputImage;
     public GameObject inputImage;
+    public bool avatarAvailable;
+    public bool showFPS;
+    public GameObject performancePanel;
 
-    // Add these fields to the PoseDetection class
     [Header("Detection Feedback UI")]
     public bool enableDetectionFeedback = true;
     public CanvasGroup detectionFeedbackPanel;
@@ -34,57 +40,14 @@ public class PoseDetection : MonoBehaviour
     [Tooltip("Percentage of failed detections required to show feedback (0-100%)")]
     [Range(0, 100)]
     public float failPercentageThreshold = 50f;
-    private bool isFeedbackActive = false;
     public float fadeDuration = 0.25f;
-    // Add these private variables
-    private Queue<float> detectionScoreHistory = new Queue<float>();
-    private int failedDetectionsCount = 0;
 
-    // Spheres to visualize each keypoint
-    public GameObject spherePrefab;
-    private const int k_NumKeypoints = 33;
-    private readonly List<GameObject> jointSpheres = new List<GameObject>();
-    public bool spheresVisible = false;
-
-    const int k_NumAnchors = 2254;
-    float[,] m_Anchors;
-
-    const int detectorInputSize = 224;
-    const int landmarkerInputSize = 256;
-
-    Worker m_PoseDetectorWorker;
-    Worker m_PoseLandmarkerWorker;
-    Tensor<float> m_DetectorInput;
-    Tensor<float> m_LandmarkerInput;
-    Awaitable m_DetectAwaitable;
-
-    //private Texture2D personCropTexture;
-    //public bool isPersonCropReady = false;
-    //private bool textureInitialized = false;
-
-
-    float m_TextureWidth;
-    float m_TextureHeight;
-    private Texture2D imageTexture;
-
-    // Multi-stage filtering settings
     [Header("Filtering Settings")]
-    [Tooltip("Enable/disable velocity threshold filtering")]
-    public bool useVelocityFilter = true;
     [Tooltip("Enable/disable One Euro filtering")]
     public bool useOneEuroFilter = true;
     [Tooltip("Enable/disable Kalman filtering")]
     public bool useKalmanFilter = true;
 
-    // Velocity filter settings
-    [Header("Velocity Filter Settings")]
-    [Tooltip("Maximum velocity allowed for keypoints (units/sec)")]
-    public float maxVelocity = 5.0f;
-    [Tooltip("Smoothing factor for velocity changes")]
-    [Range(0, 0.99f)]
-    public float velocitySmoothing = 0.5f;
-
-    // One Euro filter settings
     [Header("One Euro Filter Settings")]
     [Tooltip("Minimum cutoff frequency")]
     [Range(0.1f, 5.0f)]
@@ -96,7 +59,6 @@ public class PoseDetection : MonoBehaviour
     [Range(0.1f, 5.0f)]
     public float dCutoff = 1.0f;
 
-    // Kalman Filter Settings
     [Header("Kalman Filter Settings")]
     [Tooltip("Initial covariance of the filter")]
     public float kalmanInitialCovariance = 1.0f;
@@ -121,41 +83,66 @@ public class PoseDetection : MonoBehaviour
     [Range(10, 100)]
     public int maxTrackingFrames = 30;
 
-    [Header("Output Settings")]
-    [Tooltip("Scale factor for displayed keypoints")]
-    public float scaleFactor = 1.0f;
+    [Header("Debug")]
+    public bool showDebugInfo = false;
+    public Text debugText;
+
+    // Constants
+    private const int k_NumKeypoints = 33;
+    private const int k_NumAnchors = 2254;
+    private const int detectorInputSize = 224;
+    private const int landmarkerInputSize = 256;
+
+    // ML workers and tensors
+    private Worker m_PoseDetectorWorker;
+    private Worker m_PoseLandmarkerWorker;
+    private Tensor<float> m_DetectorInput;
+    private Tensor<float> m_LandmarkerInput;
+    private Awaitable m_DetectAwaitable;
+    private float[,] m_Anchors;
+
+    // Detection state
+    private float m_TextureWidth;
+    private float m_TextureHeight;
+    private Texture2D imageTexture;
+    private bool isFeedbackActive = false;
+    private Queue<float> detectionScoreHistory = new Queue<float>();
+    private int failedDetectionsCount = 0;
 
     // Filters
-    private VelocityThresholdFilter[] velocityFilters;
     private OneEuroFilter[] oneEuroFilters;
     private KalmanFilter3D[] kalmanFilters;
 
     // Output keypoint positions
     public Vector3[] keypoints = new Vector3[k_NumKeypoints];
-
-    // Confidence values for each keypoint
     private float[] keypointConfidence = new float[k_NumKeypoints];
 
     // Tracking state
     private bool isTracking = false;
     private int frameCounter = 0;
     private int trackingFrameCount = 0;
-    private Rect previousROI;
     private float2x3 previousTransform;
     private float previousScore = 0;
-
-    // Debug info
-    [Header("Debug")]
-    public bool showDebugInfo = false;
-    public Text debugText;
     private CancellationTokenSource cancellationTokenSource;
 
+    // Performance tracking
+    private float frameStartTime;
+    private float lastFrameTime;
+    private float inferenceStartTime;
+    private float lastInferenceTime;
+    private float fpsUpdateInterval = 0.5f;
+    private float fpsAccumulator = 0f;
+    private int fpsFrameCount = 0;
+    private float currentFps = 0;
+    public TextMeshProUGUI performanceText;
 
     public async void Start()
     {
-
+        // Initialize detection history tracking
         detectionScoreHistory = new Queue<float>(detectionHistoryLength);
         failedDetectionsCount = 0;
+
+
 
         // Initialize CanvasGroup properties
         if (detectionFeedbackPanel != null)
@@ -164,7 +151,6 @@ public class PoseDetection : MonoBehaviour
             detectionFeedbackPanel.alpha = 0f;
             detectionFeedbackPanel.interactable = false;
             detectionFeedbackPanel.blocksRaycasts = false;
-
             Debug.Log("CanvasGroup initialized: " + detectionFeedbackPanel.gameObject.name);
         }
         else
@@ -177,15 +163,6 @@ public class PoseDetection : MonoBehaviour
             Debug.LogError("Detection feedback text is not assigned!");
         }
 
-
-        // Create a sphere for each keypoint
-        for (int i = 0; i < k_NumKeypoints; i++)
-        {
-            GameObject sphere = Instantiate(spherePrefab, this.transform);
-            sphere.name = "JointSphere_" + i;
-            jointSpheres.Add(sphere);
-        }
-
         // Initialize multi-stage filters
         InitializeFilters();
 
@@ -194,7 +171,6 @@ public class PoseDetection : MonoBehaviour
         InitializeModels();
 
         cancellationTokenSource = new CancellationTokenSource();
-
 
         try
         {
@@ -208,8 +184,6 @@ public class PoseDetection : MonoBehaviour
                 // Check if we've been cancelled
                 cancellationTokenSource.Token.ThrowIfCancellationRequested();
             }
-
-            // Other initialization code...
         }
         catch (OperationCanceledException)
         {
@@ -221,13 +195,10 @@ public class PoseDetection : MonoBehaviour
             Debug.LogError($"Error during initialization: {e.Message}");
             return;
         }
-    
 
         imageTexture = webcamInput.GetFrame();
         m_TextureWidth = imageTexture.width;
         m_TextureHeight = imageTexture.height;
-
-
 
         if (segmentationRenderer != null)
         {
@@ -239,10 +210,16 @@ public class PoseDetection : MonoBehaviour
         {
             try
             {
+                // Start timing this frame
+                frameStartTime = Time.realtimeSinceStartup;
+
                 frameCounter++;
 
                 // Decide whether to use detection or tracking mode
                 bool shouldRunDetection = ShouldRunDetection();
+
+                // Start timing inference
+                inferenceStartTime = Time.realtimeSinceStartup;
 
                 if (shouldRunDetection)
                 {
@@ -259,11 +236,20 @@ public class PoseDetection : MonoBehaviour
                     await m_DetectAwaitable;
                 }
 
+                // Calculate inference time
+                lastInferenceTime = (Time.realtimeSinceStartup - inferenceStartTime) * 1000f; // ms
+
+                // Update FPS tracking
+                UpdatePerformanceMetrics();
+
                 // Update debug info
                 if (showDebugInfo && debugText != null)
                 {
                     UpdateDebugInfo();
                 }
+
+                // Calculate frame time
+                lastFrameTime = Time.realtimeSinceStartup - frameStartTime;
             }
             catch (OperationCanceledException)
             {
@@ -272,6 +258,35 @@ public class PoseDetection : MonoBehaviour
         }
 
         CleanupResources();
+    }
+
+
+    private void UpdatePerformanceMetrics()
+    {   
+        if(!showFPS)
+        {
+            performancePanel.SetActive(false);
+        }
+        else performancePanel.SetActive(true);
+
+        // Update FPS calculation
+
+        fpsFrameCount++;
+        fpsAccumulator += lastFrameTime;
+
+        if (fpsAccumulator >= fpsUpdateInterval)
+        {
+            currentFps = fpsFrameCount / fpsAccumulator;
+            fpsFrameCount = 0;
+            fpsAccumulator = 0;
+
+            // Update the performance text
+            if (performanceText != null)
+            {
+                performanceText.text = string.Format("FPS: {0:F1}\nInference: {1:F1}ms",
+                    currentFps, lastInferenceTime);
+            }
+        }
     }
 
     /// <summary>
@@ -320,21 +335,14 @@ public class PoseDetection : MonoBehaviour
     /// </summary>
     private void InitializeFilters()
     {
-        // Initialize velocity filters (first stage)
-        velocityFilters = new VelocityThresholdFilter[k_NumKeypoints];
-        for (int i = 0; i < k_NumKeypoints; i++)
-        {
-            velocityFilters[i] = new VelocityThresholdFilter(maxVelocity, velocitySmoothing);
-        }
-
-        // Initialize One Euro filters (second stage)
+        // Initialize One Euro filters (first stage)
         oneEuroFilters = new OneEuroFilter[k_NumKeypoints];
         for (int i = 0; i < k_NumKeypoints; i++)
         {
             oneEuroFilters[i] = new OneEuroFilter(minCutoff, beta, dCutoff);
         }
 
-        // Initialize Kalman filters (third stage)
+        // Initialize Kalman filters (second stage)
         kalmanFilters = new KalmanFilter3D[k_NumKeypoints];
         for (int i = 0; i < k_NumKeypoints; i++)
         {
@@ -353,16 +361,6 @@ public class PoseDetection : MonoBehaviour
     /// </summary>
     private void UpdateFilterParameters()
     {
-        // Update velocity filter parameters
-        if (velocityFilters != null)
-        {
-            for (int i = 0; i < k_NumKeypoints; i++)
-            {
-                velocityFilters[i].SetMaxVelocity(maxVelocity);
-                velocityFilters[i].SetVelocitySmoothing(velocitySmoothing);
-            }
-        }
-
         // Update One Euro filter parameters
         if (oneEuroFilters != null)
         {
@@ -371,7 +369,6 @@ public class PoseDetection : MonoBehaviour
                 oneEuroFilters[i].SetParameters(minCutoff, beta, dCutoff);
             }
         }
-
         // Kalman filter parameters are updated automatically when the properties change
     }
 
@@ -494,20 +491,19 @@ public class PoseDetection : MonoBehaviour
         // Handle UI feedback based on detection history
         if (ShouldShowFeedback())
         {
-
-            //Debug.Log($"Showing feedback - Failed detections: {failedDetectionsCount}/{detectionScoreHistory.Count} ({(failedDetectionsCount * 100f / detectionScoreHistory.Count):F1}%)");
             avatar.SetActive(false);
             outputImage.SetActive(false);
             inputImage.SetActive(true);
             ShowDetectionFeedback(true);
+            posePreview.SetActive(false);
             return;
         }
         else
         {
-            avatar.SetActive(true);
+            avatar.SetActive(avatarAvailable);
             outputImage.SetActive(true);
             inputImage.SetActive(false);
-
+            posePreview.SetActive(!avatarAvailable);
             // Hide feedback when detection is successful
             if (isFeedbackActive && ShouldHideFeedback())
             {
@@ -520,16 +516,6 @@ public class PoseDetection : MonoBehaviour
 
         var face_ImageSpace = BlazeUtilsHand.mul(M, anchorPosition + new float2(outputBox[0, 0, 0], outputBox[0, 0, 1]));
         var faceTopRight_ImageSpace = BlazeUtilsHand.mul(M, anchorPosition + new float2(outputBox[0, 0, 0] + 0.5f * outputBox[0, 0, 2], outputBox[0, 0, 1] + 0.5f * outputBox[0, 0, 3]));
-
-        // Store ROI for tracking mode
-        float roiWidth = Mathf.Abs(faceTopRight_ImageSpace.x - face_ImageSpace.x) * roiExpansionFactor;
-        float roiHeight = Mathf.Abs(faceTopRight_ImageSpace.y - face_ImageSpace.y) * roiExpansionFactor;
-        previousROI = new Rect(
-            Mathf.Max(0, face_ImageSpace.x - roiWidth * 0.5f),
-            Mathf.Max(0, face_ImageSpace.y - roiHeight * 0.5f),
-            Mathf.Min(m_TextureWidth, roiWidth),
-            Mathf.Min(m_TextureHeight, roiHeight)
-        );
 
         var kp1_ImageSpace = BlazeUtilsHand.mul(M, anchorPosition + new float2(outputBox[0, 0, 4 + 2 * 0 + 0], outputBox[0, 0, 4 + 2 * 0 + 1]));
         var kp2_ImageSpace = BlazeUtilsHand.mul(M, anchorPosition + new float2(outputBox[0, 0, 4 + 2 * 1 + 0], outputBox[0, 0, 4 + 2 * 1 + 1]));
@@ -615,6 +601,7 @@ public class PoseDetection : MonoBehaviour
             // If confidence is too low, we'll trigger a full detection on the next frame
             if (trackingConfidence < trackingScoreThreshold)
             {
+                Debug.Log("Full track");
                 // Check if we should show feedback based on detection history
                 bool shouldShowFeedback = ShouldShowFeedback();
 
@@ -638,7 +625,7 @@ public class PoseDetection : MonoBehaviour
             }
             else
             {
-                avatar.SetActive(true);
+                avatar.SetActive(avatarAvailable);
                 outputImage.SetActive(true);
                 inputImage.SetActive(false);
 
@@ -728,7 +715,6 @@ public class PoseDetection : MonoBehaviour
         {
             float failPercentage = detectionScoreHistory.Count > 0 ?
                 (failedDetectionsCount * 100f / detectionScoreHistory.Count) : 0;
-           // Debug.Log($"Detection History: {failedDetectionsCount}/{detectionScoreHistory.Count} failed ({failPercentage:F1}%)");
         }
     }
 
@@ -788,43 +774,21 @@ public class PoseDetection : MonoBehaviour
             // Apply multi-stage filtering
             Vector3 filteredPosition = position_WorldSpace;
 
-            // Stage 1: Apply velocity filter (if enabled)
-            if (useVelocityFilter)
-            {
-                filteredPosition = velocityFilters[i].Filter(filteredPosition);
-            }
-
-            // Stage 2: Apply One Euro filter (if enabled)
+            // Stage 1: Apply One Euro filter (if enabled)
             if (useOneEuroFilter)
             {
                 filteredPosition = oneEuroFilters[i].Filter(filteredPosition);
             }
 
-            // Stage 3: Apply Kalman filter (if enabled)
+            // Stage 2: Apply Kalman filter (if enabled)
             if (useKalmanFilter)
             {
                 filteredPosition = kalmanFilters[i].Update(filteredPosition);
             }
 
-            if (!spheresVisible)
-            {
-                jointSpheres[i].SetActive(false);
-            }
-            else jointSpheres[i].SetActive(true);
-
-
-            // Set the sphere's position to the filtered result
-            jointSpheres[i].transform.localPosition = filteredPosition * scaleFactor;
             keypoints[i] = filteredPosition;
-
-            // Adjust sphere size based on confidence
-            float minSize = 0.01f;
-            float maxSize = 0.1f;
-            float normalizedConfidence = Mathf.Clamp01(keypointConfidence[i]);
-            float adjustedSize = Mathf.Lerp(minSize, maxSize, normalizedConfidence);
-            jointSpheres[i].transform.localScale = Vector3.one * adjustedSize;
+            posePreview.SetKeypoint(i, keypointConfidence[i] > confidenceThreshold, filteredPosition);
         }
-        //isPersonCropReady = true;
     }
 
     // Add this method to the PoseDetection class
@@ -845,14 +809,14 @@ public class PoseDetection : MonoBehaviour
         }
 
         // Start coroutine to animate the panel fade
-        //StopAllCoroutines();
         StartCoroutine(AnimateFeedbackPanel(show));
     }
+
     // Add this coroutine to animate the fade
     private IEnumerator AnimateFeedbackPanel(bool fadeIn)
     {
         float startAlpha = detectionFeedbackPanel.alpha;
-        float targetAlpha = fadeIn ? 0.8f : 0f; // Dim to 70% opacity when showing
+        float targetAlpha = fadeIn ? 0.8f : 0f; // Dim to 80% opacity when showing
         float elapsedTime = 0f;
 
         while (elapsedTime < fadeDuration)
@@ -869,7 +833,6 @@ public class PoseDetection : MonoBehaviour
         detectionFeedbackPanel.interactable = fadeIn;
         detectionFeedbackPanel.blocksRaycasts = fadeIn;
     }
-
 
     void OnDestroy()
     {
@@ -894,18 +857,5 @@ public class PoseDetection : MonoBehaviour
         {
             m_PoseLandmarkerWorker.Dispose();
         }
-    }
-
-    // Optional: Add a method to visualize the ROI for debugging
-    void OnDrawGizmos()
-    {
-        if (!Application.isPlaying || !isTracking)
-            return;
-
-        // Draw ROI rectangle in scene view
-        Gizmos.color = Color.green;
-        Vector3 center = new Vector3(previousROI.center.x, previousROI.center.y, 0);
-        Vector3 size = new Vector3(previousROI.width, previousROI.height, 0.01f);
-        Gizmos.DrawWireCube(center, size);
     }
 }

@@ -9,40 +9,40 @@ using UnityEngine;
 
 namespace Mediapipe.Unity
 {
-  public class MultiHandLandmarkListAnnotationController : AnnotationController<MultiHandLandmarkListAnnotation>
-  {
-    [SerializeField] private bool _visualizeZ = false;
-
-    private IReadOnlyList<NormalizedLandmarkList> _currentHandLandmarkLists;
-    private IReadOnlyList<ClassificationList> _currentHandedness;
-
-    public void DrawNow(IReadOnlyList<NormalizedLandmarkList> handLandmarkLists, IReadOnlyList<ClassificationList> handedness = null)
+    public class MultiHandLandmarkListAnnotationController : AnnotationController<MultiHandLandmarkListAnnotation>
     {
-      _currentHandLandmarkLists = handLandmarkLists;
-      _currentHandedness = handedness;
-      SyncNow();
-    }
+        [SerializeField] private bool _visualizeZ = false;
 
-    public void DrawLater(IReadOnlyList<NormalizedLandmarkList> handLandmarkLists)
-    {
-      UpdateCurrentTarget(handLandmarkLists, ref _currentHandLandmarkLists);
-    }
+        private IReadOnlyList<NormalizedLandmarkList> _currentHandLandmarkLists;
+        private IReadOnlyList<ClassificationList> _currentHandedness;
 
-    public void DrawLater(IReadOnlyList<ClassificationList> handedness)
-    {
-      UpdateCurrentTarget(handedness, ref _currentHandedness);
-    }
+        public void DrawNow(IReadOnlyList<NormalizedLandmarkList> handLandmarkLists, IReadOnlyList<ClassificationList> handedness = null)
+        {
+            _currentHandLandmarkLists = handLandmarkLists;
+            _currentHandedness = handedness;
+            SyncNow();
+        }
 
-    protected override void SyncNow()
-    {
-      isStale = false;
-      annotation.Draw(_currentHandLandmarkLists, _visualizeZ);
+        public void DrawLater(IReadOnlyList<NormalizedLandmarkList> handLandmarkLists)
+        {
+            UpdateCurrentTarget(handLandmarkLists, ref _currentHandLandmarkLists);
+        }
 
-      if (_currentHandedness != null)
-      {
-        annotation.SetHandedness(_currentHandedness);
-      }
-      _currentHandedness = null;
+        public void DrawLater(IReadOnlyList<ClassificationList> handedness)
+        {
+            UpdateCurrentTarget(handedness, ref _currentHandedness);
+        }
+
+        protected override void SyncNow()
+        {
+            isStale = false;
+            annotation.Draw(_currentHandLandmarkLists, _visualizeZ);
+
+            if (_currentHandedness != null)
+            {
+                annotation.SetHandedness(_currentHandedness);
+            }
+            _currentHandedness = null;
+        }
     }
-  }
 }

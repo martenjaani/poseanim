@@ -10,52 +10,52 @@ using UnityEngine;
 
 namespace Mediapipe.Unity
 {
-  public class NormalizedLandmarkListAnnotationController : AnnotationController<PointListAnnotation>
-  {
-    [SerializeField] private bool _visualizeZ = false;
-
-    private IReadOnlyList<NormalizedLandmark> _currentTarget;
-
-    public void DrawNow(IReadOnlyList<NormalizedLandmark> target)
+    public class NormalizedLandmarkListAnnotationController : AnnotationController<PointListAnnotation>
     {
-      _currentTarget = target;
-      SyncNow();
-    }
+        [SerializeField] private bool _visualizeZ = false;
 
-    public void DrawNow(NormalizedLandmarkList target)
-    {
-      DrawNow(target?.Landmark);
-    }
+        private IReadOnlyList<NormalizedLandmark> _currentTarget;
 
-    public void DrawNow(IReadOnlyList<NormalizedLandmarkList> landmarkLists)
-    {
-      DrawNow(FlattenNormalizedLandmarkLists(landmarkLists));
-    }
+        public void DrawNow(IReadOnlyList<NormalizedLandmark> target)
+        {
+            _currentTarget = target;
+            SyncNow();
+        }
 
-    public void DrawLater(IReadOnlyList<NormalizedLandmark> target)
-    {
-      UpdateCurrentTarget(target, ref _currentTarget);
-    }
+        public void DrawNow(NormalizedLandmarkList target)
+        {
+            DrawNow(target?.Landmark);
+        }
 
-    public void DrawLater(NormalizedLandmarkList target)
-    {
-      UpdateCurrentTarget(target?.Landmark, ref _currentTarget);
-    }
+        public void DrawNow(IReadOnlyList<NormalizedLandmarkList> landmarkLists)
+        {
+            DrawNow(FlattenNormalizedLandmarkLists(landmarkLists));
+        }
 
-    public void DrawLater(IReadOnlyList<NormalizedLandmarkList> landmarkLists)
-    {
-      UpdateCurrentTarget(FlattenNormalizedLandmarkLists(landmarkLists), ref _currentTarget);
-    }
+        public void DrawLater(IReadOnlyList<NormalizedLandmark> target)
+        {
+            UpdateCurrentTarget(target, ref _currentTarget);
+        }
 
-    protected override void SyncNow()
-    {
-      isStale = false;
-      annotation.Draw(_currentTarget, _visualizeZ);
-    }
+        public void DrawLater(NormalizedLandmarkList target)
+        {
+            UpdateCurrentTarget(target?.Landmark, ref _currentTarget);
+        }
 
-    private IReadOnlyList<NormalizedLandmark> FlattenNormalizedLandmarkLists(IReadOnlyList<NormalizedLandmarkList> landmarkLists)
-    {
-      return landmarkLists?.Select((x) => x.Landmark).SelectMany(x => x).ToList();
+        public void DrawLater(IReadOnlyList<NormalizedLandmarkList> landmarkLists)
+        {
+            UpdateCurrentTarget(FlattenNormalizedLandmarkLists(landmarkLists), ref _currentTarget);
+        }
+
+        protected override void SyncNow()
+        {
+            isStale = false;
+            annotation.Draw(_currentTarget, _visualizeZ);
+        }
+
+        private IReadOnlyList<NormalizedLandmark> FlattenNormalizedLandmarkLists(IReadOnlyList<NormalizedLandmarkList> landmarkLists)
+        {
+            return landmarkLists?.Select((x) => x.Landmark).SelectMany(x => x).ToList();
+        }
     }
-  }
 }

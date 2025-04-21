@@ -6,10 +6,10 @@
 
 namespace Mediapipe.Tasks.Core
 {
-  internal interface ITaskOptions
-  {
-    CalculatorOptions ToCalculatorOptions() => null;
+    internal interface ITaskOptions
+    {
+        CalculatorOptions ToCalculatorOptions() => null;
 
-    Google.Protobuf.WellKnownTypes.Any ToAnyOptions() => null;
-  }
+        Google.Protobuf.WellKnownTypes.Any ToAnyOptions() => null;
+    }
 }

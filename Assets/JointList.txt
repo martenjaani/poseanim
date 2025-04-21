@@ -86,6 +86,7 @@ Character1_Hips
                 J_R_HeadRibbon_02
             MTH_DEF
             Locator_Head_Above
+            NOSE
         Character1_RightShoulder
           Character1_RightArm
             Character1_RightForeArm

@@ -10,37 +10,37 @@ using mptcc = Mediapipe.Tasks.Components.Containers;
 
 namespace Mediapipe.Unity
 {
-  public class DetectionResultAnnotationController : AnnotationController<DetectionListAnnotation>
-  {
-    [SerializeField, Range(0, 1)] private float _threshold = 0.0f;
-
-    private readonly object _currentTargetLock = new object();
-    private mptcc.DetectionResult _currentTarget;
-
-    public void DrawNow(mptcc.DetectionResult target)
+    public class DetectionResultAnnotationController : AnnotationController<DetectionListAnnotation>
     {
-      _currentTarget = target;
-      SyncNow();
-    }
+        [SerializeField, Range(0, 1)] private float _threshold = 0.0f;
 
-    public void DrawLater(mptcc.DetectionResult target) => UpdateCurrentTarget(target);
+        private readonly object _currentTargetLock = new object();
+        private mptcc.DetectionResult _currentTarget;
 
-    protected void UpdateCurrentTarget(mptcc.DetectionResult newTarget)
-    {
-      lock (_currentTargetLock)
-      {
-        newTarget.CloneTo(ref _currentTarget);
-        isStale = true;
-      }
-    }
+        public void DrawNow(mptcc.DetectionResult target)
+        {
+            _currentTarget = target;
+            SyncNow();
+        }
 
-    protected override void SyncNow()
-    {
-      lock (_currentTargetLock)
-      {
-        isStale = false;
-        annotation.Draw(_currentTarget, imageSize, _threshold);
-      }
+        public void DrawLater(mptcc.DetectionResult target) => UpdateCurrentTarget(target);
+
+        protected void UpdateCurrentTarget(mptcc.DetectionResult newTarget)
+        {
+            lock (_currentTargetLock)
+            {
+                newTarget.CloneTo(ref _currentTarget);
+                isStale = true;
+            }
+        }
+
+        protected override void SyncNow()
+        {
+            lock (_currentTargetLock)
+            {
+                isStale = false;
+                annotation.Draw(_currentTarget, imageSize, _threshold);
+            }
+        }
     }
-  }
 }

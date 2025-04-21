@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Unity.Mathematics;
 using Unity.Sentis;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class HandDetection : MonoBehaviour
 {

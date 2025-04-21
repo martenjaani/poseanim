@@ -1,7 +1,6 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
-using TMPro;
 
 public class WebcamSelector : MonoBehaviour
 {
@@ -11,7 +10,7 @@ public class WebcamSelector : MonoBehaviour
     public InputField webcamIdInput;
     public Button confirmButton;
     public TextMeshProUGUI statusText;
-
+    public GameObject viewController;
     [Header("References")]
     public WebcamInput webcamInput;  // Reference to your WebcamInput component
 
@@ -110,6 +109,8 @@ public class WebcamSelector : MonoBehaviour
 
                 // Log the selection
                 Debug.Log($"Selected webcam ID {selectedId}: {availableDevices[selectedId].name}");
+
+                viewController.SetActive(true);
             }
             else
             {
@@ -139,4 +140,5 @@ public class WebcamSelector : MonoBehaviour
             ConfirmWebcamSelection();
         }
     }
+
 }

@@ -8,21 +8,21 @@ using System.Runtime.InteropServices;
 
 namespace Mediapipe
 {
-  [StructLayout(LayoutKind.Sequential)]
-  internal readonly struct NativeRect
-  {
-    public readonly int left;
-    public readonly int top;
-    public readonly int bottom;
-    public readonly int right;
-  }
+    [StructLayout(LayoutKind.Sequential)]
+    internal readonly struct NativeRect
+    {
+        public readonly int left;
+        public readonly int top;
+        public readonly int bottom;
+        public readonly int right;
+    }
 
-  [StructLayout(LayoutKind.Sequential)]
-  internal readonly struct NativeRectF
-  {
-    public readonly float left;
-    public readonly float top;
-    public readonly float bottom;
-    public readonly float right;
-  }
+    [StructLayout(LayoutKind.Sequential)]
+    internal readonly struct NativeRectF
+    {
+        public readonly float left;
+        public readonly float top;
+        public readonly float bottom;
+        public readonly float right;
+    }
 }

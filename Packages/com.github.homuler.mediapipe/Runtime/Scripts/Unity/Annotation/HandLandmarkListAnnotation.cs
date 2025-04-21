@@ -12,24 +12,24 @@ using mptcc = Mediapipe.Tasks.Components.Containers;
 namespace Mediapipe.Unity
 {
 #pragma warning disable IDE0065
-  using Color = UnityEngine.Color;
+    using Color = UnityEngine.Color;
 #pragma warning restore IDE0065
 
-  public sealed class HandLandmarkListAnnotation : HierarchicalAnnotation
-  {
-    [SerializeField] private PointListAnnotation _landmarkListAnnotation;
-    [SerializeField] private ConnectionListAnnotation _connectionListAnnotation;
-    [SerializeField] private Color _leftLandmarkColor = Color.green;
-    [SerializeField] private Color _rightLandmarkColor = Color.green;
-
-    public enum Hand
+    public sealed class HandLandmarkListAnnotation : HierarchicalAnnotation
     {
-      Left,
-      Right,
-    }
+        [SerializeField] private PointListAnnotation _landmarkListAnnotation;
+        [SerializeField] private ConnectionListAnnotation _connectionListAnnotation;
+        [SerializeField] private Color _leftLandmarkColor = Color.green;
+        [SerializeField] private Color _rightLandmarkColor = Color.green;
 
-    private const int _LandmarkCount = 21;
-    private readonly List<(int, int)> _connections = new List<(int, int)> {
+        public enum Hand
+        {
+            Left,
+            Right,
+        }
+
+        private const int _LandmarkCount = 21;
+        private readonly List<(int, int)> _connections = new List<(int, int)> {
       (0, 1),
       (1, 2),
       (2, 3),
@@ -53,135 +53,135 @@ namespace Mediapipe.Unity
       (19, 20),
     };
 
-    public override bool isMirrored
-    {
-      set
-      {
-        _landmarkListAnnotation.isMirrored = value;
-        _connectionListAnnotation.isMirrored = value;
-        base.isMirrored = value;
-      }
-    }
+        public override bool isMirrored
+        {
+            set
+            {
+                _landmarkListAnnotation.isMirrored = value;
+                _connectionListAnnotation.isMirrored = value;
+                base.isMirrored = value;
+            }
+        }
 
-    public override RotationAngle rotationAngle
-    {
-      set
-      {
-        _landmarkListAnnotation.rotationAngle = value;
-        _connectionListAnnotation.rotationAngle = value;
-        base.rotationAngle = value;
-      }
-    }
+        public override RotationAngle rotationAngle
+        {
+            set
+            {
+                _landmarkListAnnotation.rotationAngle = value;
+                _connectionListAnnotation.rotationAngle = value;
+                base.rotationAngle = value;
+            }
+        }
 
-    public PointAnnotation this[int index] => _landmarkListAnnotation[index];
+        public PointAnnotation this[int index] => _landmarkListAnnotation[index];
 
-    private void Start()
-    {
-      _landmarkListAnnotation.Fill(_LandmarkCount);
-      _connectionListAnnotation.Fill(_connections, _landmarkListAnnotation);
-    }
+        private void Start()
+        {
+            _landmarkListAnnotation.Fill(_LandmarkCount);
+            _connectionListAnnotation.Fill(_connections, _landmarkListAnnotation);
+        }
 
-    public void SetLeftLandmarkColor(Color leftLandmarkColor)
-    {
-      _leftLandmarkColor = leftLandmarkColor;
-    }
+        public void SetLeftLandmarkColor(Color leftLandmarkColor)
+        {
+            _leftLandmarkColor = leftLandmarkColor;
+        }
 
-    public void SetRightLandmarkColor(Color rightLandmarkColor)
-    {
-      _rightLandmarkColor = rightLandmarkColor;
-    }
+        public void SetRightLandmarkColor(Color rightLandmarkColor)
+        {
+            _rightLandmarkColor = rightLandmarkColor;
+        }
 
-    public void SetLandmarkRadius(float landmarkRadius)
-    {
-      _landmarkListAnnotation.SetRadius(landmarkRadius);
-    }
+        public void SetLandmarkRadius(float landmarkRadius)
+        {
+            _landmarkListAnnotation.SetRadius(landmarkRadius);
+        }
 
-    public void SetConnectionColor(Color connectionColor)
-    {
-      _connectionListAnnotation.SetColor(connectionColor);
-    }
+        public void SetConnectionColor(Color connectionColor)
+        {
+            _connectionListAnnotation.SetColor(connectionColor);
+        }
 
-    public void SetConnectionWidth(float connectionWidth)
-    {
-      _connectionListAnnotation.SetLineWidth(connectionWidth);
-    }
+        public void SetConnectionWidth(float connectionWidth)
+        {
+            _connectionListAnnotation.SetLineWidth(connectionWidth);
+        }
 
-    public void SetHandedness(Hand handedness)
-    {
-      if (handedness == Hand.Left)
-      {
-        _landmarkListAnnotation.SetColor(_leftLandmarkColor);
-      }
-      else if (handedness == Hand.Right)
-      {
-        _landmarkListAnnotation.SetColor(_rightLandmarkColor);
-      }
-    }
+        public void SetHandedness(Hand handedness)
+        {
+            if (handedness == Hand.Left)
+            {
+                _landmarkListAnnotation.SetColor(_leftLandmarkColor);
+            }
+            else if (handedness == Hand.Right)
+            {
+                _landmarkListAnnotation.SetColor(_rightLandmarkColor);
+            }
+        }
 
-    public void SetHandedness(IReadOnlyList<Classification> handedness)
-    {
-      if (handedness == null || handedness.Count == 0 || handedness[0].Label == "Left")
-      {
-        SetHandedness(Hand.Left);
-      }
-      else if (handedness[0].Label == "Right")
-      {
-        SetHandedness(Hand.Right);
-      }
-      // ignore unknown label
-    }
+        public void SetHandedness(IReadOnlyList<Classification> handedness)
+        {
+            if (handedness == null || handedness.Count == 0 || handedness[0].Label == "Left")
+            {
+                SetHandedness(Hand.Left);
+            }
+            else if (handedness[0].Label == "Right")
+            {
+                SetHandedness(Hand.Right);
+            }
+            // ignore unknown label
+        }
 
-    public void SetHandedness(ClassificationList handedness)
-    {
-      SetHandedness(handedness.Classification);
-    }
+        public void SetHandedness(ClassificationList handedness)
+        {
+            SetHandedness(handedness.Classification);
+        }
 
-    public void SetHandedness(IReadOnlyList<mptcc.Category> handedness)
-    {
-      if (handedness == null || handedness.Count == 0 || handedness[0].categoryName == "Left")
-      {
-        SetHandedness(Hand.Left);
-      }
-      else if (handedness[0].categoryName == "Right")
-      {
-        SetHandedness(Hand.Right);
-      }
-      // ignore unknown label
-    }
+        public void SetHandedness(IReadOnlyList<mptcc.Category> handedness)
+        {
+            if (handedness == null || handedness.Count == 0 || handedness[0].categoryName == "Left")
+            {
+                SetHandedness(Hand.Left);
+            }
+            else if (handedness[0].categoryName == "Right")
+            {
+                SetHandedness(Hand.Right);
+            }
+            // ignore unknown label
+        }
 
-    public void SetHandedness(mptcc.Classifications handedness)
-    {
-      SetHandedness(handedness.categories);
-    }
+        public void SetHandedness(mptcc.Classifications handedness)
+        {
+            SetHandedness(handedness.categories);
+        }
 
-    public void Draw(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false)
-    {
-      if (ActivateFor(target))
-      {
-        _landmarkListAnnotation.Draw(target, visualizeZ);
-        // Draw explicitly because connection annotation's targets remain the same.
-        _connectionListAnnotation.Redraw();
-      }
-    }
+        public void Draw(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false)
+        {
+            if (ActivateFor(target))
+            {
+                _landmarkListAnnotation.Draw(target, visualizeZ);
+                // Draw explicitly because connection annotation's targets remain the same.
+                _connectionListAnnotation.Redraw();
+            }
+        }
 
-    public void Draw(NormalizedLandmarkList target, bool visualizeZ = false)
-    {
-      Draw(target?.Landmark, visualizeZ);
-    }
+        public void Draw(NormalizedLandmarkList target, bool visualizeZ = false)
+        {
+            Draw(target?.Landmark, visualizeZ);
+        }
 
-    public void Draw(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false)
-    {
-      if (ActivateFor(target))
-      {
-        _landmarkListAnnotation.Draw(target, visualizeZ);
-        // Draw explicitly because connection annotation's targets remain the same.
-        _connectionListAnnotation.Redraw();
-      }
-    }
+        public void Draw(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false)
+        {
+            if (ActivateFor(target))
+            {
+                _landmarkListAnnotation.Draw(target, visualizeZ);
+                // Draw explicitly because connection annotation's targets remain the same.
+                _connectionListAnnotation.Redraw();
+            }
+        }
 
-    public void Draw(mptcc.NormalizedLandmarks target, bool visualizeZ = false)
-    {
-      Draw(target.landmarks, visualizeZ);
+        public void Draw(mptcc.NormalizedLandmarks target, bool visualizeZ = false)
+        {
+            Draw(target.landmarks, visualizeZ);
+        }
     }
-  }
 }

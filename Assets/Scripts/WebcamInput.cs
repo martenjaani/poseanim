@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using static Mediapipe.VideoPreStreamCalculatorOptions.Types;
 
 public class WebcamInput : MonoBehaviour
 {

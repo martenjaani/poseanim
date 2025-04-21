@@ -9,23 +9,23 @@ using System.Runtime.InteropServices;
 
 namespace Mediapipe
 {
-  [StructLayout(LayoutKind.Sequential)]
-  internal readonly struct ImageArray
-  {
-    private readonly IntPtr _data;
-    private readonly int _size;
-
-    public void Dispose()
+    [StructLayout(LayoutKind.Sequential)]
+    internal readonly struct ImageArray
     {
-      UnsafeNativeMethods.mp_api_ImageArray__delete(_data);
-    }
+        private readonly IntPtr _data;
+        private readonly int _size;
 
-    public ReadOnlySpan<IntPtr> AsReadOnlySpan()
-    {
-      unsafe
-      {
-        return new ReadOnlySpan<IntPtr>((IntPtr*)_data, _size);
-      }
+        public void Dispose()
+        {
+            UnsafeNativeMethods.mp_api_ImageArray__delete(_data);
+        }
+
+        public ReadOnlySpan<IntPtr> AsReadOnlySpan()
+        {
+            unsafe
+            {
+                return new ReadOnlySpan<IntPtr>((IntPtr*)_data, _size);
+            }
+        }
     }
-  }
 }

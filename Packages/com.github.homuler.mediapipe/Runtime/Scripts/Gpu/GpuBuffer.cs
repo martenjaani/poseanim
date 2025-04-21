@@ -8,9 +8,9 @@ using System;
 
 namespace Mediapipe
 {
-  public class GpuBuffer : MpResourceHandle
-  {
-    public GpuBuffer(IntPtr ptr, bool isOwner = true) : base(ptr, isOwner) { }
+    public class GpuBuffer : MpResourceHandle
+    {
+        public GpuBuffer(IntPtr ptr, bool isOwner = true) : base(ptr, isOwner) { }
 
 #if UNITY_EDITOR_LINUX || UNITY_STANDALONE_LINUX || UNITY_ANDROID
     public GpuBuffer(GlTextureBuffer glTextureBuffer) : base()
@@ -21,24 +21,24 @@ namespace Mediapipe
     }
 #endif
 
-    protected override void DeleteMpPtr()
-    {
-      UnsafeNativeMethods.mp_GpuBuffer__delete(ptr);
-    }
+        protected override void DeleteMpPtr()
+        {
+            UnsafeNativeMethods.mp_GpuBuffer__delete(ptr);
+        }
 
-    public GpuBufferFormat Format()
-    {
-      return SafeNativeMethods.mp_GpuBuffer__format(mpPtr);
-    }
+        public GpuBufferFormat Format()
+        {
+            return SafeNativeMethods.mp_GpuBuffer__format(mpPtr);
+        }
 
-    public int Width()
-    {
-      return SafeNativeMethods.mp_GpuBuffer__width(mpPtr);
-    }
+        public int Width()
+        {
+            return SafeNativeMethods.mp_GpuBuffer__width(mpPtr);
+        }
 
-    public int Height()
-    {
-      return SafeNativeMethods.mp_GpuBuffer__height(mpPtr);
+        public int Height()
+        {
+            return SafeNativeMethods.mp_GpuBuffer__height(mpPtr);
+        }
     }
-  }
 }

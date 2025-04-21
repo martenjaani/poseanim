@@ -4,6 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// Handles finger animation based on hand tracking data, compatible with AvatarController bones
+/// NOT CURRENTLY USED AND PROBABLY WILL NOT WORK ON THE AVATAR
 /// </summary>
 public class FingerAnimatorLite : MonoBehaviour
 {

@@ -8,32 +8,32 @@ using System.Collections.Generic;
 
 namespace Mediapipe.Tasks.Vision.ImageSegmenter
 {
-  /// <summary>
-  ///   Output result of ImageSegmenter.
-  /// </summary>
-  public readonly struct ImageSegmenterResult
-  {
     /// <summary>
-    ///   multiple masks of float image where, for each mask,
-    ///   each pixel represents the prediction confidence, usually in the [0, 1] range.
+    ///   Output result of ImageSegmenter.
     /// </summary>
-    public readonly List<Image> confidenceMasks;
-    /// <summary>
-    ///   a category mask of uint8 image where each pixel represents the class
-    ///   which the pixel in the original image was predicted to belong to.
-    /// </summary>
-    public readonly Image categoryMask;
-
-    internal ImageSegmenterResult(List<Image> confidenceMasks, Image categoryMask)
+    public readonly struct ImageSegmenterResult
     {
-      this.confidenceMasks = confidenceMasks;
-      this.categoryMask = categoryMask;
-    }
+        /// <summary>
+        ///   multiple masks of float image where, for each mask,
+        ///   each pixel represents the prediction confidence, usually in the [0, 1] range.
+        /// </summary>
+        public readonly List<Image> confidenceMasks;
+        /// <summary>
+        ///   a category mask of uint8 image where each pixel represents the class
+        ///   which the pixel in the original image was predicted to belong to.
+        /// </summary>
+        public readonly Image categoryMask;
 
-    public static ImageSegmenterResult Alloc(bool outputConfidenceMasks = false)
-    {
-      var confidenceMasks = outputConfidenceMasks ? new List<Image>() : null;
-      return new ImageSegmenterResult(confidenceMasks, null);
+        internal ImageSegmenterResult(List<Image> confidenceMasks, Image categoryMask)
+        {
+            this.confidenceMasks = confidenceMasks;
+            this.categoryMask = categoryMask;
+        }
+
+        public static ImageSegmenterResult Alloc(bool outputConfidenceMasks = false)
+        {
+            var confidenceMasks = outputConfidenceMasks ? new List<Image>() : null;
+            return new ImageSegmenterResult(confidenceMasks, null);
+        }
     }
-  }
 }

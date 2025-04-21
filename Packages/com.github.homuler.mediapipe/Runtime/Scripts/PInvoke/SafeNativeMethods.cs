@@ -8,12 +8,12 @@ using System.Security;
 
 namespace Mediapipe
 {
-  [SuppressUnmanagedCodeSecurity]
-  internal static partial class SafeNativeMethods
-  {
-    internal const string MediaPipeLibrary =
+    [SuppressUnmanagedCodeSecurity]
+    internal static partial class SafeNativeMethods
+    {
+        internal const string MediaPipeLibrary =
 #if UNITY_EDITOR
-      "mediapipe_c";
+          "mediapipe_c";
 #elif UNITY_IOS || UNITY_WEBGL
       "__Internal";
 #elif UNITY_ANDROID
@@ -21,5 +21,5 @@ namespace Mediapipe
 #else
       "mediapipe_c";
 #endif
-  }
+    }
 }

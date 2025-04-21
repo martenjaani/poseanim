@@ -38,7 +38,7 @@ bool IsHuman(uint2 pixelCoord)
     float maskValue = SegmentationMask[segCoord].r;
     
     // Return true if above threshold (is human)
-    return maskValue > _SegmentationThreshold;
+    return maskValue >= _SegmentationThreshold;
 }
 
 // UpdateBackground kernel: Updates the background model in areas not occupied by a human
@@ -147,6 +147,7 @@ void ApplyBackground(uint3 id : SV_DispatchThreadID)
     
     // For human pixels, use the background model
     float4 bgPixel = BackgroundModel[id.xy];
+    OutputTexture[id.xy] = inputPixel;
     
     // Make sure alpha is 1.0
     bgPixel.a = 1.0;

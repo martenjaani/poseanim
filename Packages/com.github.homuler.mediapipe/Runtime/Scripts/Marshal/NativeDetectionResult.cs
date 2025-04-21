@@ -9,59 +9,59 @@ using System.Runtime.InteropServices;
 
 namespace Mediapipe
 {
-  [StructLayout(LayoutKind.Sequential)]
-  internal readonly struct NativeDetection
-  {
-    private readonly IntPtr _categories;
-
-    public readonly uint categoriesCount;
-
-    public readonly NativeRect boundingBox;
-
-    private readonly IntPtr _keypoints;
-
-    public readonly uint keypointsCount;
-
-    public ReadOnlySpan<NativeCategory> categories
+    [StructLayout(LayoutKind.Sequential)]
+    internal readonly struct NativeDetection
     {
-      get
-      {
-        unsafe
+        private readonly IntPtr _categories;
+
+        public readonly uint categoriesCount;
+
+        public readonly NativeRect boundingBox;
+
+        private readonly IntPtr _keypoints;
+
+        public readonly uint keypointsCount;
+
+        public ReadOnlySpan<NativeCategory> categories
         {
-          return new ReadOnlySpan<NativeCategory>((NativeCategory*)_categories, (int)categoriesCount);
+            get
+            {
+                unsafe
+                {
+                    return new ReadOnlySpan<NativeCategory>((NativeCategory*)_categories, (int)categoriesCount);
+                }
+            }
         }
-      }
-    }
 
-    public ReadOnlySpan<NativeNormalizedKeypoint> keypoints
-    {
-      get
-      {
-        unsafe
+        public ReadOnlySpan<NativeNormalizedKeypoint> keypoints
         {
-          return new ReadOnlySpan<NativeNormalizedKeypoint>((NativeNormalizedKeypoint*)_keypoints, (int)keypointsCount);
+            get
+            {
+                unsafe
+                {
+                    return new ReadOnlySpan<NativeNormalizedKeypoint>((NativeNormalizedKeypoint*)_keypoints, (int)keypointsCount);
+                }
+            }
         }
-      }
     }
-  }
 
-  [StructLayout(LayoutKind.Sequential)]
-  internal readonly struct NativeDetectionResult
-  {
-    private readonly IntPtr _detections;
-    public readonly uint detectionsCount;
-
-    public ReadOnlySpan<NativeDetection> AsReadOnlySpan()
+    [StructLayout(LayoutKind.Sequential)]
+    internal readonly struct NativeDetectionResult
     {
-      unsafe
-      {
-        return new ReadOnlySpan<NativeDetection>((NativeDetection*)_detections, (int)detectionsCount);
-      }
-    }
+        private readonly IntPtr _detections;
+        public readonly uint detectionsCount;
 
-    public void Dispose()
-    {
-      UnsafeNativeMethods.mp_tasks_c_components_containers_CppCloseDetectionResult(this);
+        public ReadOnlySpan<NativeDetection> AsReadOnlySpan()
+        {
+            unsafe
+            {
+                return new ReadOnlySpan<NativeDetection>((NativeDetection*)_detections, (int)detectionsCount);
+            }
+        }
+
+        public void Dispose()
+        {
+            UnsafeNativeMethods.mp_tasks_c_components_containers_CppCloseDetectionResult(this);
+        }
     }
-  }
 }

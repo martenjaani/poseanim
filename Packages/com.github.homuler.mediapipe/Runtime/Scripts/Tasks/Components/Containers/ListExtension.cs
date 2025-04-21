@@ -8,58 +8,58 @@ using System.Collections.Generic;
 
 namespace Mediapipe.Tasks.Components.Containers
 {
-  internal static class ListExtension
-  {
-    public static void CopyFrom(this List<Classifications> target, List<Classifications> source)
+    internal static class ListExtension
     {
-      target.ResizeTo(source.Count);
+        public static void CopyFrom(this List<Classifications> target, List<Classifications> source)
+        {
+            target.ResizeTo(source.Count);
 
-      var i = 0;
-      foreach (var x in source)
-      {
-        var v = target[i];
-        x.CloneTo(ref v);
-        target[i++] = v;
-      }
+            var i = 0;
+            foreach (var x in source)
+            {
+                var v = target[i];
+                x.CloneTo(ref v);
+                target[i++] = v;
+            }
+        }
+
+        public static void CopyFrom(this List<Detection> target, List<Detection> source)
+        {
+            target.ResizeTo(source.Count);
+
+            var i = 0;
+            foreach (var x in source)
+            {
+                var v = target[i];
+                x.CloneTo(ref v);
+                target[i++] = v;
+            }
+        }
+
+        public static void CopyFrom(this List<Landmarks> target, List<Landmarks> source)
+        {
+            target.ResizeTo(source.Count);
+
+            var i = 0;
+            foreach (var x in source)
+            {
+                var v = target[i];
+                x.CloneTo(ref v);
+                target[i++] = v;
+            }
+        }
+
+        public static void CopyFrom(this List<NormalizedLandmarks> target, List<NormalizedLandmarks> source)
+        {
+            target.ResizeTo(source.Count);
+
+            var i = 0;
+            foreach (var x in source)
+            {
+                var v = target[i];
+                x.CloneTo(ref v);
+                target[i++] = v;
+            }
+        }
     }
-
-    public static void CopyFrom(this List<Detection> target, List<Detection> source)
-    {
-      target.ResizeTo(source.Count);
-
-      var i = 0;
-      foreach (var x in source)
-      {
-        var v = target[i];
-        x.CloneTo(ref v);
-        target[i++] = v;
-      }
-    }
-
-    public static void CopyFrom(this List<Landmarks> target, List<Landmarks> source)
-    {
-      target.ResizeTo(source.Count);
-
-      var i = 0;
-      foreach (var x in source)
-      {
-        var v = target[i];
-        x.CloneTo(ref v);
-        target[i++] = v;
-      }
-    }
-
-    public static void CopyFrom(this List<NormalizedLandmarks> target, List<NormalizedLandmarks> source)
-    {
-      target.ResizeTo(source.Count);
-
-      var i = 0;
-      foreach (var x in source)
-      {
-        var v = target[i];
-        x.CloneTo(ref v);
-        target[i++] = v;
-      }
-    }
-  }
 }

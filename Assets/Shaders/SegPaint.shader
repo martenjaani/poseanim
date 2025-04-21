@@ -1,4 +1,4 @@
-Shader "SegPaint"
+﻿Shader "SegPaint"
 {
     Properties {
         _MainTex ("Webcam Texture", 2D) = "white" {}
@@ -10,6 +10,7 @@ Shader "SegPaint"
         _BlendEdge ("Blend Edge Softness", Range(0.001, 0.1)) = 0.02
         _UseDynamicBg ("Use Dynamic Background", Int) = 1
         _DilationAmount ("Mask Dilation Amount", Range(0.0, 0.05)) = 0.01
+        _HumanOpacity ("Human Opacity", Range(0,1)) = 0.3  // New property for transparency
     }
     SubShader {
         Tags { "RenderType"="Opaque" }
@@ -29,6 +30,7 @@ Shader "SegPaint"
             float _BlendEdge;        // Edge softness for blending
             int _UseDynamicBg;       // Whether to use the dynamic background (1) or solid color (0)
             float _DilationAmount;   // How much to expand the mask
+            float _HumanOpacity;     // Opacity for human silhouette
             
             fixed4 frag(v2f_img i) : SV_Target {
                 // Get the original webcam color
@@ -52,10 +54,10 @@ Shader "SegPaint"
                 }
                 
                 // Clamp UVs to valid range for sampling
-                float2 clampedUV = clamp(maskUV, 0.001, 0.999);
+                float2 clampedUV = maskUV; //clamp(maskUV, 0.001, 0.999);
                 
                 // Sample the mask (assuming grayscale mask)
-                float maskVal = tex2D(_MaskTex, clampedUV).r;
+                float maskVal = tex2D(_MaskTex, maskUV).r;
                 
                 // Dilate the mask by sampling neighboring pixels and taking maximum
                 float dilatedMask = maskVal;
@@ -72,8 +74,15 @@ Shader "SegPaint"
                 dilatedMask = max(dilatedMask, tex2D(_MaskTex, clampedUV + float2(-_DilationAmount, _DilationAmount)).r);
                 dilatedMask = max(dilatedMask, tex2D(_MaskTex, clampedUV + float2(-_DilationAmount, -_DilationAmount)).r);
                 
-                // Apply threshold with smooth edge blending
-                float blend = smoothstep(_Threshold - _BlendEdge, _Threshold + _BlendEdge, dilatedMask);
+                // Compute screen‑space anti‑aliasing width for this mask value
+                float aa = fwidth(dilatedMask);
+                
+                // Expand the smoothstep’s transition region by aa,
+                // so edges get feathered automatically in screen space
+                float lower = _Threshold - _BlendEdge - aa;
+                float upper = _Threshold + _BlendEdge + aa;
+                float blend = smoothstep(lower, upper, dilatedMask);
+
                 
                 // Debug visualization modes
                 if (_DebugMode == 1) {
@@ -97,12 +106,20 @@ Shader "SegPaint"
                     return bgColor;
                 }
                 
-                // Determine the replacement color (either dynamic background or solid color)
-                fixed4 replacementColor = _UseDynamicBg ? bgColor : _BackgroundColor;
+                // Determine the replacement color
+                fixed4 finalColor;
                 
+                if (_UseDynamicBg == 1) {
+                    // Using dynamic background - normal operation
+                    fixed4 replacementColor = bgColor;
+                    finalColor = lerp(camColor, replacementColor, blend);
+
+                } else {
+                    // Using solid color with transparency for human silhouette
+                    finalColor = lerp(camColor, lerp(camColor, _BackgroundColor, (1.0 - _HumanOpacity)), blend);
+
+                }
                 
-                // Composite the final color - blend between webcam and replacement color
-                fixed4 finalColor = lerp(camColor, replacementColor, blend);
                 return finalColor;
             }
             ENDCG

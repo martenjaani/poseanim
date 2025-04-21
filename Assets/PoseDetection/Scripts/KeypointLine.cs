@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class KeypointLine : MonoBehaviour
@@ -19,8 +18,8 @@ public class KeypointLine : MonoBehaviour
 
     void Update()
     {
-        lineRenderer.SetPosition(0, start.Position);
-        lineRenderer.SetPosition(1, end.Position);
+        lineRenderer.SetPosition(0, start.Position + new Vector3(0, 1, 0));
+        lineRenderer.SetPosition(1, end.Position + new Vector3(0, 1, 0));
         lineRenderer.gameObject.SetActive(start.IsActive && end.IsActive);
     }
 }

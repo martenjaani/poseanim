@@ -4,43 +4,42 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
-using UnityEngine;
-
 using Mediapipe.Tasks.Vision.FaceLandmarker;
+using UnityEngine;
 
 namespace Mediapipe.Unity
 {
-  public class FaceLandmarkerResultAnnotationController : AnnotationController<MultiFaceLandmarkListAnnotation>
-  {
-    [SerializeField] private bool _visualizeZ = false;
-
-    private readonly object _currentTargetLock = new object();
-    private FaceLandmarkerResult _currentTarget;
-
-    public void DrawNow(FaceLandmarkerResult target)
+    public class FaceLandmarkerResultAnnotationController : AnnotationController<MultiFaceLandmarkListAnnotation>
     {
-      target.CloneTo(ref _currentTarget);
-      SyncNow();
-    }
+        [SerializeField] private bool _visualizeZ = false;
 
-    public void DrawLater(FaceLandmarkerResult target) => UpdateCurrentTarget(target);
+        private readonly object _currentTargetLock = new object();
+        private FaceLandmarkerResult _currentTarget;
 
-    protected void UpdateCurrentTarget(FaceLandmarkerResult newTarget)
-    {
-      lock (_currentTargetLock)
-      {
-        newTarget.CloneTo(ref _currentTarget);
-        isStale = true;
-      }
-    }
+        public void DrawNow(FaceLandmarkerResult target)
+        {
+            target.CloneTo(ref _currentTarget);
+            SyncNow();
+        }
 
-    protected override void SyncNow()
-    {
-      lock (_currentTargetLock)
-      {
-        isStale = false;
-        annotation.Draw(_currentTarget.faceLandmarks, _visualizeZ);
-      }
+        public void DrawLater(FaceLandmarkerResult target) => UpdateCurrentTarget(target);
+
+        protected void UpdateCurrentTarget(FaceLandmarkerResult newTarget)
+        {
+            lock (_currentTargetLock)
+            {
+                newTarget.CloneTo(ref _currentTarget);
+                isStale = true;
+            }
+        }
+
+        protected override void SyncNow()
+        {
+            lock (_currentTargetLock)
+            {
+                isStale = false;
+                annotation.Draw(_currentTarget.faceLandmarks, _visualizeZ);
+            }
+        }
     }
-  }
 }

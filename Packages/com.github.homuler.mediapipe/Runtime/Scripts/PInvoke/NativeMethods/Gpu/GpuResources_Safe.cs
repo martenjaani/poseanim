@@ -10,9 +10,9 @@ using System.Runtime.InteropServices;
 
 namespace Mediapipe
 {
-  internal static partial class SafeNativeMethods
-  {
-    [Pure, DllImport(MediaPipeLibrary, ExactSpelling = true)]
-    public static extern IntPtr mp_SharedGpuResources__get(IntPtr gpuResources);
-  }
+    internal static partial class SafeNativeMethods
+    {
+        [Pure, DllImport(MediaPipeLibrary, ExactSpelling = true)]
+        public static extern IntPtr mp_SharedGpuResources__get(IntPtr gpuResources);
+    }
 }

@@ -9,37 +9,37 @@ using UnityEngine;
 
 namespace Mediapipe.Unity
 {
-  public class DetectionListAnnotationController : AnnotationController<DetectionListAnnotation>
-  {
-    [SerializeField, Range(0, 1)] private float _threshold = 0.0f;
-
-    private IReadOnlyList<Detection> _currentTarget;
-
-    public void DrawNow(IReadOnlyList<Detection> target)
+    public class DetectionListAnnotationController : AnnotationController<DetectionListAnnotation>
     {
-      _currentTarget = target;
-      SyncNow();
-    }
+        [SerializeField, Range(0, 1)] private float _threshold = 0.0f;
 
-    public void DrawNow(DetectionList target)
-    {
-      DrawNow(target?.Detection);
-    }
+        private IReadOnlyList<Detection> _currentTarget;
 
-    public void DrawLater(IReadOnlyList<Detection> target)
-    {
-      UpdateCurrentTarget(target, ref _currentTarget);
-    }
+        public void DrawNow(IReadOnlyList<Detection> target)
+        {
+            _currentTarget = target;
+            SyncNow();
+        }
 
-    public void DrawLater(DetectionList target)
-    {
-      DrawLater(target?.Detection);
-    }
+        public void DrawNow(DetectionList target)
+        {
+            DrawNow(target?.Detection);
+        }
 
-    protected override void SyncNow()
-    {
-      isStale = false;
-      annotation.Draw(_currentTarget, _threshold);
+        public void DrawLater(IReadOnlyList<Detection> target)
+        {
+            UpdateCurrentTarget(target, ref _currentTarget);
+        }
+
+        public void DrawLater(DetectionList target)
+        {
+            DrawLater(target?.Detection);
+        }
+
+        protected override void SyncNow()
+        {
+            isStale = false;
+            annotation.Draw(_currentTarget, _threshold);
+        }
     }
-  }
 }

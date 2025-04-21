@@ -6,9 +6,9 @@
 
 namespace Mediapipe.Tasks.Audio.Core
 {
-  public enum RunningMode
-  {
-    AUDIO_CLIPS,
-    AUDIO_STREAM,
-  }
+    public enum RunningMode
+    {
+        AUDIO_CLIPS,
+        AUDIO_STREAM,
+    }
 }

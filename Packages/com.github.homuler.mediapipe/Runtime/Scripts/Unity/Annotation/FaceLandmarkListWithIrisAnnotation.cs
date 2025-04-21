@@ -12,199 +12,199 @@ using mptcc = Mediapipe.Tasks.Components.Containers;
 namespace Mediapipe.Unity
 {
 #pragma warning disable IDE0065
-  using Color = UnityEngine.Color;
+    using Color = UnityEngine.Color;
 #pragma warning restore IDE0065
 
-  public sealed class FaceLandmarkListWithIrisAnnotation : HierarchicalAnnotation
-  {
-    [SerializeField] private FaceLandmarkListAnnotation _faceLandmarkListAnnotation;
-    [SerializeField] private IrisLandmarkListAnnotation _leftIrisLandmarkListAnnotation;
-    [SerializeField] private IrisLandmarkListAnnotation _rightIrisLandmarkListAnnotation;
-
-    private const int _FaceLandmarkCount = 468;
-    private const int _IrisLandmarkCount = 5;
-
-    public override bool isMirrored
+    public sealed class FaceLandmarkListWithIrisAnnotation : HierarchicalAnnotation
     {
-      set
-      {
-        _faceLandmarkListAnnotation.isMirrored = value;
-        _leftIrisLandmarkListAnnotation.isMirrored = value;
-        _rightIrisLandmarkListAnnotation.isMirrored = value;
-        base.isMirrored = value;
-      }
-    }
+        [SerializeField] private FaceLandmarkListAnnotation _faceLandmarkListAnnotation;
+        [SerializeField] private IrisLandmarkListAnnotation _leftIrisLandmarkListAnnotation;
+        [SerializeField] private IrisLandmarkListAnnotation _rightIrisLandmarkListAnnotation;
 
-    public override RotationAngle rotationAngle
-    {
-      set
-      {
-        _faceLandmarkListAnnotation.rotationAngle = value;
-        _leftIrisLandmarkListAnnotation.rotationAngle = value;
-        _rightIrisLandmarkListAnnotation.rotationAngle = value;
-        base.rotationAngle = value;
-      }
-    }
+        private const int _FaceLandmarkCount = 468;
+        private const int _IrisLandmarkCount = 5;
 
-    public void SetFaceLandmarkColor(Color color)
-    {
-      _faceLandmarkListAnnotation.SetLandmarkColor(color);
-    }
-
-    public void SetIrisLandmarkColor(Color color)
-    {
-      _leftIrisLandmarkListAnnotation.SetLandmarkColor(color);
-      _rightIrisLandmarkListAnnotation.SetLandmarkColor(color);
-    }
-
-    public void SetFaceLandmarkRadius(float radius)
-    {
-      _faceLandmarkListAnnotation.SetLandmarkRadius(radius);
-    }
-
-    public void SetIrisLandmarkRadius(float radius)
-    {
-      _leftIrisLandmarkListAnnotation.SetLandmarkRadius(radius);
-      _rightIrisLandmarkListAnnotation.SetLandmarkRadius(radius);
-    }
-
-    public void SetFaceConnectionColor(Color color)
-    {
-      _faceLandmarkListAnnotation.SetConnectionColor(color);
-    }
-
-    public void SetFaceConnectionWidth(float width)
-    {
-      _faceLandmarkListAnnotation.SetConnectionWidth(width);
-    }
-
-    public void SetIrisCircleColor(Color color)
-    {
-      _leftIrisLandmarkListAnnotation.SetCircleColor(color);
-      _rightIrisLandmarkListAnnotation.SetCircleColor(color);
-    }
-
-    public void SetIrisCircleWidth(float width)
-    {
-      _leftIrisLandmarkListAnnotation.SetCircleWidth(width);
-      _rightIrisLandmarkListAnnotation.SetCircleWidth(width);
-    }
-
-    public void Draw(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      if (ActivateFor(target))
-      {
-        var (faceLandmarks, leftLandmarks, rightLandmarks) = PartitionLandmarkList(target);
-        DrawFaceLandmarkList(faceLandmarks, visualizeZ);
-        DrawLeftIrisLandmarkList(leftLandmarks, visualizeZ, circleVertices);
-        DrawRightIrisLandmarkList(rightLandmarks, visualizeZ, circleVertices);
-      }
-    }
-
-    public void Draw(NormalizedLandmarkList target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      if (ActivateFor(target))
-      {
-        Draw(target.Landmark, visualizeZ, circleVertices);
-      }
-    }
-
-    public void Draw(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      if (ActivateFor(target))
-      {
-        var (faceLandmarks, leftLandmarks, rightLandmarks) = PartitionLandmarkList(target);
-        DrawFaceLandmarkList(faceLandmarks, visualizeZ);
-        DrawLeftIrisLandmarkList(leftLandmarks, visualizeZ, circleVertices);
-        DrawRightIrisLandmarkList(rightLandmarks, visualizeZ, circleVertices);
-      }
-    }
-
-    public void Draw(mptcc.NormalizedLandmarks target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      if (ActivateFor(target))
-      {
-        Draw(target.landmarks, visualizeZ, circleVertices);
-      }
-    }
-
-    private void DrawFaceLandmarkList(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false)
-    {
-      _faceLandmarkListAnnotation.Draw(target, visualizeZ);
-    }
-
-    private void DrawFaceLandmarkList(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false)
-    {
-      _faceLandmarkListAnnotation.Draw(target, visualizeZ);
-    }
-
-    private void DrawLeftIrisLandmarkList(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      // does not deactivate if the target is null as long as face landmarks are present.
-      _leftIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
-    }
-
-    private void DrawLeftIrisLandmarkList(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      // does not deactivate if the target is null as long as face landmarks are present.
-      _leftIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
-    }
-
-    private void DrawRightIrisLandmarkList(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      // does not deactivate if the target is null as long as face landmarks are present.
-      _rightIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
-    }
-
-    private void DrawRightIrisLandmarkList(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
-    {
-      // does not deactivate if the target is null as long as face landmarks are present.
-      _rightIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
-    }
-
-    private static (IReadOnlyList<T>, IReadOnlyList<T>, IReadOnlyList<T>) PartitionLandmarkList<T>(IReadOnlyList<T> landmarks)
-    {
-      if (landmarks == null)
-      {
-        return (null, null, null);
-      }
-
-      var enumerator = landmarks.GetEnumerator();
-      var faceLandmarks = new List<T>(_FaceLandmarkCount);
-      for (var i = 0; i < _FaceLandmarkCount; i++)
-      {
-        if (enumerator.MoveNext())
+        public override bool isMirrored
         {
-          faceLandmarks.Add(enumerator.Current);
+            set
+            {
+                _faceLandmarkListAnnotation.isMirrored = value;
+                _leftIrisLandmarkListAnnotation.isMirrored = value;
+                _rightIrisLandmarkListAnnotation.isMirrored = value;
+                base.isMirrored = value;
+            }
         }
-      }
-      if (faceLandmarks.Count < _FaceLandmarkCount)
-      {
-        return (null, null, null);
-      }
 
-      var leftIrisLandmarks = new List<T>(_IrisLandmarkCount);
-      for (var i = 0; i < _IrisLandmarkCount; i++)
-      {
-        if (enumerator.MoveNext())
+        public override RotationAngle rotationAngle
         {
-          leftIrisLandmarks.Add(enumerator.Current);
+            set
+            {
+                _faceLandmarkListAnnotation.rotationAngle = value;
+                _leftIrisLandmarkListAnnotation.rotationAngle = value;
+                _rightIrisLandmarkListAnnotation.rotationAngle = value;
+                base.rotationAngle = value;
+            }
         }
-      }
-      if (leftIrisLandmarks.Count < _IrisLandmarkCount)
-      {
-        return (faceLandmarks, null, null);
-      }
 
-      var rightIrisLandmarks = new List<T>(_IrisLandmarkCount);
-      for (var i = 0; i < _IrisLandmarkCount; i++)
-      {
-        if (enumerator.MoveNext())
+        public void SetFaceLandmarkColor(Color color)
         {
-          rightIrisLandmarks.Add(enumerator.Current);
+            _faceLandmarkListAnnotation.SetLandmarkColor(color);
         }
-      }
-      return rightIrisLandmarks.Count < _IrisLandmarkCount ? (faceLandmarks, leftIrisLandmarks, null) : (faceLandmarks, leftIrisLandmarks, rightIrisLandmarks);
+
+        public void SetIrisLandmarkColor(Color color)
+        {
+            _leftIrisLandmarkListAnnotation.SetLandmarkColor(color);
+            _rightIrisLandmarkListAnnotation.SetLandmarkColor(color);
+        }
+
+        public void SetFaceLandmarkRadius(float radius)
+        {
+            _faceLandmarkListAnnotation.SetLandmarkRadius(radius);
+        }
+
+        public void SetIrisLandmarkRadius(float radius)
+        {
+            _leftIrisLandmarkListAnnotation.SetLandmarkRadius(radius);
+            _rightIrisLandmarkListAnnotation.SetLandmarkRadius(radius);
+        }
+
+        public void SetFaceConnectionColor(Color color)
+        {
+            _faceLandmarkListAnnotation.SetConnectionColor(color);
+        }
+
+        public void SetFaceConnectionWidth(float width)
+        {
+            _faceLandmarkListAnnotation.SetConnectionWidth(width);
+        }
+
+        public void SetIrisCircleColor(Color color)
+        {
+            _leftIrisLandmarkListAnnotation.SetCircleColor(color);
+            _rightIrisLandmarkListAnnotation.SetCircleColor(color);
+        }
+
+        public void SetIrisCircleWidth(float width)
+        {
+            _leftIrisLandmarkListAnnotation.SetCircleWidth(width);
+            _rightIrisLandmarkListAnnotation.SetCircleWidth(width);
+        }
+
+        public void Draw(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
+        {
+            if (ActivateFor(target))
+            {
+                var (faceLandmarks, leftLandmarks, rightLandmarks) = PartitionLandmarkList(target);
+                DrawFaceLandmarkList(faceLandmarks, visualizeZ);
+                DrawLeftIrisLandmarkList(leftLandmarks, visualizeZ, circleVertices);
+                DrawRightIrisLandmarkList(rightLandmarks, visualizeZ, circleVertices);
+            }
+        }
+
+        public void Draw(NormalizedLandmarkList target, bool visualizeZ = false, int circleVertices = 128)
+        {
+            if (ActivateFor(target))
+            {
+                Draw(target.Landmark, visualizeZ, circleVertices);
+            }
+        }
+
+        public void Draw(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
+        {
+            if (ActivateFor(target))
+            {
+                var (faceLandmarks, leftLandmarks, rightLandmarks) = PartitionLandmarkList(target);
+                DrawFaceLandmarkList(faceLandmarks, visualizeZ);
+                DrawLeftIrisLandmarkList(leftLandmarks, visualizeZ, circleVertices);
+                DrawRightIrisLandmarkList(rightLandmarks, visualizeZ, circleVertices);
+            }
+        }
+
+        public void Draw(mptcc.NormalizedLandmarks target, bool visualizeZ = false, int circleVertices = 128)
+        {
+            if (ActivateFor(target))
+            {
+                Draw(target.landmarks, visualizeZ, circleVertices);
+            }
+        }
+
+        private void DrawFaceLandmarkList(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false)
+        {
+            _faceLandmarkListAnnotation.Draw(target, visualizeZ);
+        }
+
+        private void DrawFaceLandmarkList(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false)
+        {
+            _faceLandmarkListAnnotation.Draw(target, visualizeZ);
+        }
+
+        private void DrawLeftIrisLandmarkList(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
+        {
+            // does not deactivate if the target is null as long as face landmarks are present.
+            _leftIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
+        }
+
+        private void DrawLeftIrisLandmarkList(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
+        {
+            // does not deactivate if the target is null as long as face landmarks are present.
+            _leftIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
+        }
+
+        private void DrawRightIrisLandmarkList(IReadOnlyList<NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
+        {
+            // does not deactivate if the target is null as long as face landmarks are present.
+            _rightIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
+        }
+
+        private void DrawRightIrisLandmarkList(IReadOnlyList<mptcc.NormalizedLandmark> target, bool visualizeZ = false, int circleVertices = 128)
+        {
+            // does not deactivate if the target is null as long as face landmarks are present.
+            _rightIrisLandmarkListAnnotation.Draw(target, visualizeZ, circleVertices);
+        }
+
+        private static (IReadOnlyList<T>, IReadOnlyList<T>, IReadOnlyList<T>) PartitionLandmarkList<T>(IReadOnlyList<T> landmarks)
+        {
+            if (landmarks == null)
+            {
+                return (null, null, null);
+            }
+
+            var enumerator = landmarks.GetEnumerator();
+            var faceLandmarks = new List<T>(_FaceLandmarkCount);
+            for (var i = 0; i < _FaceLandmarkCount; i++)
+            {
+                if (enumerator.MoveNext())
+                {
+                    faceLandmarks.Add(enumerator.Current);
+                }
+            }
+            if (faceLandmarks.Count < _FaceLandmarkCount)
+            {
+                return (null, null, null);
+            }
+
+            var leftIrisLandmarks = new List<T>(_IrisLandmarkCount);
+            for (var i = 0; i < _IrisLandmarkCount; i++)
+            {
+                if (enumerator.MoveNext())
+                {
+                    leftIrisLandmarks.Add(enumerator.Current);
+                }
+            }
+            if (leftIrisLandmarks.Count < _IrisLandmarkCount)
+            {
+                return (faceLandmarks, null, null);
+            }
+
+            var rightIrisLandmarks = new List<T>(_IrisLandmarkCount);
+            for (var i = 0; i < _IrisLandmarkCount; i++)
+            {
+                if (enumerator.MoveNext())
+                {
+                    rightIrisLandmarks.Add(enumerator.Current);
+                }
+            }
+            return rightIrisLandmarks.Count < _IrisLandmarkCount ? (faceLandmarks, leftIrisLandmarks, null) : (faceLandmarks, leftIrisLandmarks, rightIrisLandmarks);
+        }
     }
-  }
 }

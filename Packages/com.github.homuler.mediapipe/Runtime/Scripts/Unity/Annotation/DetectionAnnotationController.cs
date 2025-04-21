@@ -8,27 +8,27 @@ using UnityEngine;
 
 namespace Mediapipe.Unity
 {
-  public class DetectionAnnotationController : AnnotationController<DetectionAnnotation>
-  {
-    [SerializeField, Range(0, 1)] private float _threshold = 0.0f;
-
-    private Detection _currentTarget;
-
-    public void DrawNow(Detection target)
+    public class DetectionAnnotationController : AnnotationController<DetectionAnnotation>
     {
-      _currentTarget = target;
-      SyncNow();
-    }
+        [SerializeField, Range(0, 1)] private float _threshold = 0.0f;
 
-    public void DrawLater(Detection target)
-    {
-      UpdateCurrentTarget(target, ref _currentTarget);
-    }
+        private Detection _currentTarget;
 
-    protected override void SyncNow()
-    {
-      isStale = false;
-      annotation.Draw(_currentTarget, _threshold);
+        public void DrawNow(Detection target)
+        {
+            _currentTarget = target;
+            SyncNow();
+        }
+
+        public void DrawLater(Detection target)
+        {
+            UpdateCurrentTarget(target, ref _currentTarget);
+        }
+
+        protected override void SyncNow()
+        {
+            isStale = false;
+            annotation.Draw(_currentTarget, _threshold);
+        }
     }
-  }
 }

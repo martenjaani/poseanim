@@ -1,4 +1,3 @@
-using System;
 using Unity.Sentis;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,7 +12,13 @@ public class SegmentationRenderer : MonoBehaviour
     public ComputeShader segmentationComputeShader;  // Compute shader to process segmentation data
     public ComputeShader backgroundModelComputeShader; // Compute shader for background model
     public float segmentationThreshold = 0.5f;   // Threshold for segmentation mask
-    public Color fallbackColor = Color.black;   // Fallback color for areas not yet captured in background
+    public Color fallbackColor = Color.black;  // Fallback color for areas not yet captured in background
+
+
+    public Color segColor = Color.black;
+    public float humanOpacity = 0.98f;
+    public bool dontUseInPaint = true;
+
 
     private RenderTexture segmentationRT;       // RenderTexture for the segmentation mask
     private RenderTexture backgroundModelRT;     // RenderTexture storing the dynamic background model
@@ -26,6 +31,9 @@ public class SegmentationRenderer : MonoBehaviour
     // Learning rate parameters
     public float baseLearningRate = 0.01f;
     public float farDistanceFactor = 3.0f;
+
+    [Range(0f, 0.5f)]
+    public float dialationAmmount = 0.015f;
 
 
     // Add these new fields to the SegmentationRenderer class
@@ -50,19 +58,31 @@ public class SegmentationRenderer : MonoBehaviour
         int webcamWidth = webcamTexture.width;
         int webcamHeight = webcamTexture.height;
 
-        // Create and initialize the segmentation render texture
-        segmentationRT = new RenderTexture(size, size, 0, RenderTextureFormat.ARGB32);
-        segmentationRT.enableRandomWrite = true;
+        // Segmentation mask sRGB RT
+        var segDesc = new RenderTextureDescriptor(size, size, RenderTextureFormat.ARGB32)
+        {
+            enableRandomWrite = true,
+            sRGB = false
+        };
+        segmentationRT = new RenderTexture(segDesc);
         segmentationRT.Create();
 
-        // Create and initialize the background model render texture (at webcam resolution)
-        backgroundModelRT = new RenderTexture(webcamWidth, webcamHeight, 0, RenderTextureFormat.ARGB32);
-        backgroundModelRT.enableRandomWrite = true;
+        // Background model sRGB RT (webcam resolution)
+        var bgDesc = new RenderTextureDescriptor(webcamWidth, webcamHeight, RenderTextureFormat.ARGB32)
+        {
+            enableRandomWrite = true,
+            sRGB = false
+        };
+        backgroundModelRT = new RenderTexture(bgDesc);
         backgroundModelRT.Create();
 
-        // Create and initialize the output render texture
-        outputRT = new RenderTexture(webcamWidth, webcamHeight, 0, RenderTextureFormat.ARGB32);
-        outputRT.enableRandomWrite = true;
+        // Final output sRGB RT (webcam resolution)
+        var outDesc = new RenderTextureDescriptor(webcamWidth, webcamHeight, RenderTextureFormat.ARGB32)
+        {
+            enableRandomWrite = true,
+            sRGB = false
+        };
+        outputRT = new RenderTexture(outDesc);
         outputRT.Create();
 
         // Get kernel handles
@@ -137,6 +157,24 @@ public class SegmentationRenderer : MonoBehaviour
                 mat.SetTexture("_MaskTex", segmentationRT);
                 mat.SetTexture("_BgTex", backgroundModelRT);
                 mat.SetMatrix("_InvTransform", transformMatrix);
+                mat.SetColor("_BackgroundColor", segColor);
+
+                if (dontUseInPaint)
+                {
+                    mat.SetInt("_UseDynamicBg", 0);
+                    mat.SetFloat("_DilationAmount", 0);
+                    mat.SetFloat("_HumanOpacity", humanOpacity);
+
+                }
+                else
+                {
+                    mat.SetInt("_UseDynamicBg", 1);
+                    mat.SetFloat("_DilationAmount", dialationAmmount);
+                    mat.SetFloat("_HumanOpacity", 0f);
+
+
+                }
+
             }
 
             // Generate the person-only texture if enabled
@@ -214,6 +252,7 @@ public class SegmentationRenderer : MonoBehaviour
             backgroundModelComputeShader.SetFloat("_SegmentationThreshold", segmentationThreshold);
             backgroundModelComputeShader.SetFloat("_LearningRate", baseLearningRate); // Base learning rate
             backgroundModelComputeShader.SetFloat("_FarDistanceFactor", farDistanceFactor); // Multiplier for far pixels
+            backgroundModelComputeShader.SetFloat("_MinDecayRate", 0.001f); // ghost cleaner
 
             int threadGroupsX = Mathf.CeilToInt(webcamWidth / 8.0f);
             int threadGroupsY = Mathf.CeilToInt(webcamHeight / 8.0f);
@@ -325,77 +364,77 @@ public class SegmentationRenderer : MonoBehaviour
         }
 
     }
-    
-    /// <summary>
-/// Updates the entire background model with the current frame
-/// Used when no human is detected in the frame
-/// </summary>
-/// <param name="webcamTexture">Current webcam texture</param>
-public void UpdateEntireBackground(Texture webcamTexture)
-{
-    if (!isInitialized)
-    {
-        Debug.LogWarning("SegmentationRenderer not initialized. Call Initialize() first.");
-        return;
-    }
 
-    try
+    /// <summary>
+    /// Updates the entire background model with the current frame
+    /// Used when no human is detected in the frame
+    /// </summary>
+    /// <param name="webcamTexture">Current webcam texture</param>
+    public void UpdateEntireBackground(Texture webcamTexture)
     {
-        // When no human is detected, we can update the entire background model
-        // with the current frame at a faster rate than normal
-        float entireFrameUpdateRate = 0.1f; // 10% blend per frame, much faster than normal updates
-        
-        // Update the background model by blending the current frame
-        // We'll create a simple compute shader operation or use a material to do this
-        if (backgroundModelComputeShader != null)
+        if (!isInitialized)
         {
-            int updateFullBgKernel = backgroundModelComputeShader.FindKernel("UpdateFullBackground");
-            if (updateFullBgKernel >= 0) // Kernel exists
+            Debug.LogWarning("SegmentationRenderer not initialized. Call Initialize() first.");
+            return;
+        }
+
+        try
+        {
+            // When no human is detected, we can update the entire background model
+            // with the current frame at a faster rate than normal
+            float entireFrameUpdateRate = 0.1f; // 10% blend per frame, much faster than normal updates
+
+            // Update the background model by blending the current frame
+            // We'll create a simple compute shader operation or use a material to do this
+            if (backgroundModelComputeShader != null)
             {
-                backgroundModelComputeShader.SetTexture(updateFullBgKernel, "InputTexture", webcamTexture);
-                backgroundModelComputeShader.SetTexture(updateFullBgKernel, "BackgroundModel", backgroundModelRT);
-                backgroundModelComputeShader.SetFloat("_LearningRate", entireFrameUpdateRate);
-                
-                int width, height;
-                GetDimensions(webcamTexture, out width, out height);
-                
-                int threadGroupsX = Mathf.CeilToInt(width / 8.0f);
-                int threadGroupsY = Mathf.CeilToInt(height / 8.0f);
-                backgroundModelComputeShader.Dispatch(updateFullBgKernel, threadGroupsX, threadGroupsY, 1);
+                int updateFullBgKernel = backgroundModelComputeShader.FindKernel("UpdateFullBackground");
+                if (updateFullBgKernel >= 0) // Kernel exists
+                {
+                    backgroundModelComputeShader.SetTexture(updateFullBgKernel, "InputTexture", webcamTexture);
+                    backgroundModelComputeShader.SetTexture(updateFullBgKernel, "BackgroundModel", backgroundModelRT);
+                    backgroundModelComputeShader.SetFloat("_LearningRate", entireFrameUpdateRate);
+
+                    int width, height;
+                    GetDimensions(webcamTexture, out width, out height);
+
+                    int threadGroupsX = Mathf.CeilToInt(width / 8.0f);
+                    int threadGroupsY = Mathf.CeilToInt(height / 8.0f);
+                    backgroundModelComputeShader.Dispatch(updateFullBgKernel, threadGroupsX, threadGroupsY, 1);
+                }
+                else
+                {
+                    // Fallback if kernel doesn't exist - use Graphics.Blit with a lerp
+                    Graphics.Blit(webcamTexture, backgroundModelRT);
+                }
             }
             else
             {
-                // Fallback if kernel doesn't exist - use Graphics.Blit with a lerp
+                // Fallback if no compute shader - direct update
                 Graphics.Blit(webcamTexture, backgroundModelRT);
             }
-        }
-        else
-        {
-            // Fallback if no compute shader - direct update
-            Graphics.Blit(webcamTexture, backgroundModelRT);
-        }
-        
-        // Display the raw webcam feed (no segmentation)
-        Graphics.Blit(webcamTexture, outputRT);
-        
-        // Update the output display
-        outputDisplay.texture = outputRT;
-    }
-    catch (System.Exception e)
-    {
-        Debug.LogError("Error in UpdateEntireBackground: " + e.Message);
-        
-        // Fallback - just show the webcam feed
-        Graphics.Blit(webcamTexture, outputRT);
-    }
-}
 
-// Helper method to get texture dimensions
-private void GetDimensions(Texture texture, out int width, out int height)
-{
-    width = texture.width;
-    height = texture.height;
-}
+            // Display the raw webcam feed (no segmentation)
+            Graphics.Blit(webcamTexture, outputRT);
+
+            // Update the output display
+            outputDisplay.texture = outputRT;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Error in UpdateEntireBackground: " + e.Message);
+
+            // Fallback - just show the webcam feed
+            Graphics.Blit(webcamTexture, outputRT);
+        }
+    }
+
+    // Helper method to get texture dimensions
+    private void GetDimensions(Texture texture, out int width, out int height)
+    {
+        width = texture.width;
+        height = texture.height;
+    }
 
     /// <summary>
     /// Set the segmentation threshold at runtime

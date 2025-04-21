@@ -125,14 +125,16 @@ Material:
     - _DebugMode: 0
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DilationAmount: 0.0152
+    - _DilationAmount: 0
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _HumanOpacity: 0.5
     - _LerpSpeed: 0.05
+    - _MaskScale: 1.1
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
@@ -148,11 +150,11 @@ Material:
     - _UpdateRate: 0.2
     - _UpdateSpeed: 0.05
     - _UseBackgroundTexture: 1
-    - _UseDynamicBg: 1
+    - _UseDynamicBg: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BackgroundColor: {r: 0, g: 0, b: 0, a: 1}
+    - _BackgroundColor: {r: 0, g: 0.4716981, b: 0.015054221, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

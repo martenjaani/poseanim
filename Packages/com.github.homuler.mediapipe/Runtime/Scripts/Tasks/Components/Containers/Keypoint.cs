@@ -6,46 +6,46 @@
 
 namespace Mediapipe.Tasks.Components.Containers
 {
-  /// <summary>
-  ///   A keypoint, defined by the coordinates (x, y), normalized by the image dimensions.
-  /// </summary>
-  public readonly struct NormalizedKeypoint
-  {
     /// <summary>
-    ///   x in normalized image coordinates.
+    ///   A keypoint, defined by the coordinates (x, y), normalized by the image dimensions.
     /// </summary>
-    public readonly float x;
-    /// <summary>
-    ///   y in normalized image coordinates.
-    /// </summary>
-    public readonly float y;
-    /// <summary>
-    ///   optional label of the keypoint.
-    /// </summary>
-    public readonly string label;
-    /// <summary>
-    ///   optional score of the keypoint.
-    /// </summary>
-    public readonly float? score;
-
-    internal NormalizedKeypoint(float x, float y, string label, float? score)
+    public readonly struct NormalizedKeypoint
     {
-      this.x = x;
-      this.y = y;
-      this.label = label;
-      this.score = score;
-    }
+        /// <summary>
+        ///   x in normalized image coordinates.
+        /// </summary>
+        public readonly float x;
+        /// <summary>
+        ///   y in normalized image coordinates.
+        /// </summary>
+        public readonly float y;
+        /// <summary>
+        ///   optional label of the keypoint.
+        /// </summary>
+        public readonly string label;
+        /// <summary>
+        ///   optional score of the keypoint.
+        /// </summary>
+        public readonly float? score;
 
-    internal NormalizedKeypoint(NativeNormalizedKeypoint nativeKeypoint) : this(
-      nativeKeypoint.x,
-      nativeKeypoint.y,
-      nativeKeypoint.label,
+        internal NormalizedKeypoint(float x, float y, string label, float? score)
+        {
+            this.x = x;
+            this.y = y;
+            this.label = label;
+            this.score = score;
+        }
+
+        internal NormalizedKeypoint(NativeNormalizedKeypoint nativeKeypoint) : this(
+          nativeKeypoint.x,
+          nativeKeypoint.y,
+          nativeKeypoint.label,
 #pragma warning disable IDE0004 // for Unity 2020.3.x
-      nativeKeypoint.hasScore ? (float?)nativeKeypoint.score : null)
+          nativeKeypoint.hasScore ? (float?)nativeKeypoint.score : null)
 #pragma warning restore IDE0004 // for Unity 2020.3.x
-    {
-    }
+        {
+        }
 
-    public override string ToString() => $"{{ \"x\": {x}, \"y\": {y}, \"label\": \"{label}\", \"score\": {Util.Format(score)} }}";
-  }
+        public override string ToString() => $"{{ \"x\": {x}, \"y\": {y}, \"label\": \"{label}\", \"score\": {Util.Format(score)} }}";
+    }
 }

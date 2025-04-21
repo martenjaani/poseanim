@@ -10,81 +10,81 @@ using UnityEngine;
 namespace Mediapipe.Unity
 {
 #pragma warning disable IDE0065
-  using Color = UnityEngine.Color;
+    using Color = UnityEngine.Color;
 #pragma warning restore IDE0065
 
-  public class RectangleListAnnotation : ListAnnotation<RectangleAnnotation>
-  {
-    [SerializeField] private Color _color = Color.red;
-    [SerializeField, Range(0, 1)] private float _lineWidth = 1.0f;
+    public class RectangleListAnnotation : ListAnnotation<RectangleAnnotation>
+    {
+        [SerializeField] private Color _color = Color.red;
+        [SerializeField, Range(0, 1)] private float _lineWidth = 1.0f;
 
 #if UNITY_EDITOR
-    private void OnValidate()
-    {
-      if (!UnityEditor.PrefabUtility.IsPartOfAnyPrefab(this))
-      {
-        ApplyColor(_color);
-        ApplyLineWidth(_lineWidth);
-      }
-    }
+        private void OnValidate()
+        {
+            if (!UnityEditor.PrefabUtility.IsPartOfAnyPrefab(this))
+            {
+                ApplyColor(_color);
+                ApplyLineWidth(_lineWidth);
+            }
+        }
 #endif
 
-    public void SetColor(Color color)
-    {
-      _color = color;
-      ApplyColor(_color);
-    }
-
-    public void SetLineWidth(float lineWidth)
-    {
-      _lineWidth = lineWidth;
-      ApplyLineWidth(_lineWidth);
-    }
-
-    public void Draw(IReadOnlyList<Rect> targets, Vector2Int imageSize)
-    {
-      if (ActivateFor(targets))
-      {
-        CallActionForAll(targets, (annotation, target) =>
+        public void SetColor(Color color)
         {
-          if (annotation != null) { annotation.Draw(target, imageSize); }
-        });
-      }
-    }
+            _color = color;
+            ApplyColor(_color);
+        }
 
-    public void Draw(IReadOnlyList<NormalizedRect> targets)
-    {
-      if (ActivateFor(targets))
-      {
-        CallActionForAll(targets, (annotation, target) =>
+        public void SetLineWidth(float lineWidth)
         {
-          if (annotation != null) { annotation.Draw(target); }
-        });
-      }
-    }
+            _lineWidth = lineWidth;
+            ApplyLineWidth(_lineWidth);
+        }
 
-    protected override RectangleAnnotation InstantiateChild(bool isActive = true)
-    {
-      var annotation = base.InstantiateChild(isActive);
-      annotation.SetLineWidth(_lineWidth);
-      annotation.SetColor(_color);
-      return annotation;
-    }
+        public void Draw(IReadOnlyList<Rect> targets, Vector2Int imageSize)
+        {
+            if (ActivateFor(targets))
+            {
+                CallActionForAll(targets, (annotation, target) =>
+                {
+                    if (annotation != null) { annotation.Draw(target, imageSize); }
+                });
+            }
+        }
 
-    private void ApplyColor(Color color)
-    {
-      foreach (var rect in children)
-      {
-        if (rect != null) { rect.SetColor(color); }
-      }
-    }
+        public void Draw(IReadOnlyList<NormalizedRect> targets)
+        {
+            if (ActivateFor(targets))
+            {
+                CallActionForAll(targets, (annotation, target) =>
+                {
+                    if (annotation != null) { annotation.Draw(target); }
+                });
+            }
+        }
 
-    private void ApplyLineWidth(float lineWidth)
-    {
-      foreach (var rect in children)
-      {
-        if (rect != null) { rect.SetLineWidth(lineWidth); }
-      }
+        protected override RectangleAnnotation InstantiateChild(bool isActive = true)
+        {
+            var annotation = base.InstantiateChild(isActive);
+            annotation.SetLineWidth(_lineWidth);
+            annotation.SetColor(_color);
+            return annotation;
+        }
+
+        private void ApplyColor(Color color)
+        {
+            foreach (var rect in children)
+            {
+                if (rect != null) { rect.SetColor(color); }
+            }
+        }
+
+        private void ApplyLineWidth(float lineWidth)
+        {
+            foreach (var rect in children)
+            {
+                if (rect != null) { rect.SetLineWidth(lineWidth); }
+            }
+        }
     }
-  }
 }
