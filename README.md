@@ -8,3 +8,6 @@ Link to the Windows build:
 https://drive.google.com/file/d/1sK-Oy6vpyHsJUZ8GV9DDdpGePz124jqg/view?usp=sharing
 
 Works best when Webcam has any kind of auto configuration disabled, like exposure and focus. This can be achieved through feeding the webcam through OBS Virtual Camera, disabling the features and selecting the Virtual Camera as input when running the build.
+
+A very basic version of workflow is described here
+![workflow koopia](https://github.com/user-attachments/assets/b17902c9-1dca-4c67-860b-d66d59e2342d)
