@@ -1,3 +1,8 @@
+Pooside ja liikumise tuvastamine olemasolevate tehisnärvivõrkude abil - interaktiivne peegel
+
+Töö eesmärgiks on luua toimiv, reaalajas töötav pooside tuvastamise süsteem, mis suudab tõhusalt tuvastada ja visualiseerida inimese keha asendit avatarina, tagades seejuures sujuva kasutajakogemuse. Süsteem peab olema piisavalt vastupidav igapäevaseks kasutamiseks avalikus ruumis ning toimima usaldusväärselt erinevates valgustingimustes ja stsenaariumites.
+
+
 This is a Unity 6000.0.36f1 project, can be opened with Unity Hub once cloned.
 
 ![demotestvid](https://github.com/user-attachments/assets/395a5d8f-77de-4b36-8cfe-ebbeb9938527)
