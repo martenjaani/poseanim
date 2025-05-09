@@ -1,11 +1,17 @@
+/*
+ *  This code handles the segmentation and background replacement aspects of the system through these key approaches:
+
+    Compute Shader Processing: Uses GPU-accelerated compute shaders to process segmentation data and maintain a dynamic background model.
+    Dynamic Background Learning: Gradually updates a background model over time by learning from non-human areas of each frame.
+    Segmentation Threshold: Applies a threshold to the segmentation data to create a binary mask that identifies human/non-human pixels.
+    Texture Pipeline: Manages a series of render textures for processing (segmentation mask, background model, final output).
+    Inpainting: Can replace detected human region with the corresponding background pixels - "removing" the person from the scene. 
+ */
+
 using Unity.Sentis;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Handles rendering of segmentation masks and removes humans from webcam feed
-/// by maintaining a dynamic background model.
-/// </summary>
 public class SegmentationRenderer : MonoBehaviour
 {
     public RawImage outputDisplay;          // The RawImage to display the final result

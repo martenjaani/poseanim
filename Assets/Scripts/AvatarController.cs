@@ -1,4 +1,17 @@
-﻿using System.Collections;
+﻿/*
+ * The solution used here uses the approach and techniques laid out by https://github.com/digital-standard/ThreeDPoseUnityBarracuda
+ * This code transfers pose detection keypoints to avatar movement through these key steps:
+
+    Bone Mapping: It maps 33 MediaPipe pose keypoints to corresponding avatar bones using a dictionary structure.
+    Direction-Based Rotation: It calculates directional vectors between connected joints and uses Quaternion.LookRotation to orient bones properly.
+    Inverse Rotation Compensation: It stores initial rotations and calculates inverse rotations to properly align the avatar's coordinate system with the detected pose.
+    Specialized Joint Handling: Special care is given to complex joints like hands, neck, and hips with custom rotation calculations.
+    Smoothing: A smoothing factor (0-1) reduces jitter by interpolating between current and target rotations.
+
+ * 
+ */
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 

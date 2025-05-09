@@ -8,6 +8,9 @@ public class WebcamSelector : MonoBehaviour
     public GameObject selectorPanel;
     public TextMeshProUGUI availableCamerasText;
     public InputField webcamIdInput;
+    public InputField view1Time;
+    public InputField view2Time;
+    public InputField view3Time;
     public Button confirmButton;
     public TextMeshProUGUI statusText;
     public GameObject viewController;
@@ -85,14 +88,14 @@ public class WebcamSelector : MonoBehaviour
             return;
         }
 
-        if (string.IsNullOrEmpty(webcamIdInput.text))
+        if (string.IsNullOrEmpty(webcamIdInput.text) || string.IsNullOrEmpty(view1Time.text) || string.IsNullOrEmpty(view2Time.text) || string.IsNullOrEmpty(view3Time.text))
         {
-            statusText.text = "Please enter a valid webcam ID";
+            statusText.text = "Please enter valid inputs";
             statusText.color = Color.red;
             return;
         }
 
-        if (int.TryParse(webcamIdInput.text, out int selectedId))
+        if (int.TryParse(webcamIdInput.text, out int selectedId) && int.TryParse(view1Time.text, out int view1seconds) && int.TryParse(view2Time.text, out int view2seconds) && int.TryParse(view3Time.text, out int view3seconds))
         {
             if (selectedId >= 0 && selectedId < availableDevices.Length)
             {
@@ -109,6 +112,14 @@ public class WebcamSelector : MonoBehaviour
 
                 // Log the selection
                 Debug.Log($"Selected webcam ID {selectedId}: {availableDevices[selectedId].name}");
+
+                ViewController viewControllerComponent = viewController.GetComponent<ViewController>();
+                if (viewControllerComponent != null)
+                {
+                    viewControllerComponent.view1Time = view1seconds;
+                    viewControllerComponent.view2Time = view2seconds;
+                    viewControllerComponent.view3Time = view3seconds;
+                }
 
                 viewController.SetActive(true);
             }

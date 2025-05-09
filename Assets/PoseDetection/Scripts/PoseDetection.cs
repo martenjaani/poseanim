@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using TMPro;
 using Unity.Mathematics;
 using Unity.Sentis;
-using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.UI;
 

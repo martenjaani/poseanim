@@ -1,3 +1,10 @@
+/*
+ * This code handles the cycling of different views
+ * View 1 - segmentation mask is applied on the human
+ * View 2 - segmentation mask and keypoint visualisation are applied
+ * View 3 - Human is replaced with the avatar
+ */
+
 using System.Collections;
 using UnityEngine;
 
@@ -128,13 +135,13 @@ public class ViewController : MonoBehaviour
         switch (viewMode)
         {
             case 0:
-                return view1Time;
+                return Mathf.Clamp(0,99,view1Time);
             case 1:
-                return view2Time;
+                return Mathf.Clamp(0, 99, view2Time);
             case 2:
-                return view3Time;
+                return Mathf.Clamp(0, 99, view3Time);
             default:
-                return view1Time;
+                return Mathf.Clamp(0, 99, view1Time);
         }
     }
 
