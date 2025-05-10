@@ -29,6 +29,8 @@ Unity Sentis is used to run the [MediaPipe Pose Landmarker](https://ai.google.de
 
 Unity's [sentis-blaze-pose](https://huggingface.co/unity/sentis-blaze-pose) project was utilized and heavily modified to integrate it into this project.
 
+The avatar used is [Unity-Chan!](https://assetstore.unity.com/packages/3d/characters/unity-chan-model-18705)
+
 ### Workflow
 
 The human movement is transferred to the Avatar by calculating directional vectors between the keypoints and applying them to the appropriate Avatar joints. The approach used here was inspired by the [ThreeDPoseUnityBarracuda](https://github.com/digital-standard/ThreeDPoseUnityBarracuda) project:
