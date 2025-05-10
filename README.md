@@ -13,7 +13,7 @@ The project has been tested on Nvidia GeForce RTX 2070 and RTX 3060 Ti, and achi
 
 Works best when the Webcam has any kind of auto configuration disabled, like exposure and focus. This can be achieved through feeding the webcam through OBS Virtual Camera, disabling the features, and selecting the Virtual Camera as input when running the application.
 
-## Link to the build
+### Link to the build
 
 Link to the Windows build: <br>
 https://drive.google.com/file/d/1lwLKUbnxKREkhIyDyJaCF-oiW6g6NFKk/view?usp=sharing
@@ -21,7 +21,7 @@ https://drive.google.com/file/d/1lwLKUbnxKREkhIyDyJaCF-oiW6g6NFKk/view?usp=shari
 Extract the zip folder, then run PoseAnim.exe
 
 
-### Outline
+## Outline
 
 This is a Unity 6000.0.36f1 project, which can be opened with Unity Hub once cloned.
 
