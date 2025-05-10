@@ -25,7 +25,7 @@ Extract the zip folder, then run PoseAnim.exe
 
 This is a Unity 6000.0.36f1 project, which can be opened with Unity Hub once cloned.
 
-Unity Sentis is used to run the [MediaPipe Pose Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker), which is a Single Human 3D Pose Estimation solution optimized for real time performance. It detects 33 keypoints and the human segmentation. Unity's [sentis-blaze-pose](https://huggingface.co/unity/sentis-blaze-pose) project was utilized and heavily modified to integrate it into this project.
+Unity Sentis is used to run [MediaPipe Pose Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker), which is a Single Human 3D Pose Estimation solution optimized for real time performance. It detects 33 keypoints and the human segmentation. Unity's [sentis-blaze-pose](https://huggingface.co/unity/sentis-blaze-pose) project was utilized and heavily modified to integrate it into this project.
 
 The avatar used is [Unity-Chan!](https://assetstore.unity.com/packages/3d/characters/unity-chan-model-18705)
 
