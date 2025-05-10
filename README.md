@@ -16,7 +16,9 @@ Works best when the Webcam has any kind of auto configuration disabled, like exp
 ## Link to the build
 
 Link to the Windows build: <br>
-https://drive.google.com/file/d/1sK-Oy6vpyHsJUZ8GV9DDdpGePz124jqg/view?usp=sharing
+https://drive.google.com/file/d/1lwLKUbnxKREkhIyDyJaCF-oiW6g6NFKk/view?usp=sharing
+
+Extract the zip folder, then run PoseAnim.exe
 
 
 ### Outline
