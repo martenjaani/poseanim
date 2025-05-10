@@ -12,10 +12,12 @@ public class WebcamSelector : MonoBehaviour
     public InputField view2Time;
     public InputField view3Time;
     public Button confirmButton;
+    public Toggle fpsToggle;
     public TextMeshProUGUI statusText;
     public GameObject viewController;
     [Header("References")]
     public WebcamInput webcamInput;  // Reference to your WebcamInput component
+    public PoseDetection poseDetection;
 
     private WebCamDevice[] availableDevices;
     private bool selectionConfirmed = false;
@@ -95,37 +97,52 @@ public class WebcamSelector : MonoBehaviour
             return;
         }
 
-        if (int.TryParse(webcamIdInput.text, out int selectedId) && int.TryParse(view1Time.text, out int view1seconds) && int.TryParse(view2Time.text, out int view2seconds) && int.TryParse(view3Time.text, out int view3seconds))
+        if (int.TryParse(webcamIdInput.text, out int selectedId) && float.TryParse(view1Time.text, out float view1seconds) && float.TryParse(view2Time.text, out float view2seconds) && float.TryParse(view3Time.text, out float view3seconds))
         {
             if (selectedId >= 0 && selectedId < availableDevices.Length)
             {
-                // Set the webcam ID in WebcamInput
-                webcamInput.WebcamID = selectedId;
-
-                // Hide selector and resume application
-                selectorPanel.SetActive(false);
-                selectionConfirmed = true;
-                Time.timeScale = 1f;
-
-                // Initialize WebcamInput
-                webcamInput.InitializeWebcam();
-
-                // Log the selection
-                Debug.Log($"Selected webcam ID {selectedId}: {availableDevices[selectedId].name}");
-
-                ViewController viewControllerComponent = viewController.GetComponent<ViewController>();
-                if (viewControllerComponent != null)
+                if (!(view1seconds <= 0f && view2seconds <= 0f && view3seconds <= 0f))
                 {
-                    viewControllerComponent.view1Time = view1seconds;
-                    viewControllerComponent.view2Time = view2seconds;
-                    viewControllerComponent.view3Time = view3seconds;
+                    ViewController viewControllerComponent = viewController.GetComponent<ViewController>();
+                    if (viewControllerComponent != null)
+                    {
+                        viewControllerComponent.view1Time = Mathf.Clamp(view1seconds, 0, 99);
+                        viewControllerComponent.view2Time = Mathf.Clamp(view2seconds, 0, 99);
+                        viewControllerComponent.view3Time = Mathf.Clamp(view3seconds, 0, 99);
+                    }
+
+                    // Set the webcam ID in WebcamInput
+                    webcamInput.WebcamID = selectedId;
+
+                    // Hide selector and resume application
+                    selectorPanel.SetActive(false);
+                    selectionConfirmed = true;
+                    Time.timeScale = 1f;
+
+
+
+                    // Initialize WebcamInput
+                    webcamInput.InitializeWebcam();
+
+                    // Log the selection
+                    Debug.Log($"Selected webcam ID {selectedId}: {availableDevices[selectedId].name}");
+
+                    poseDetection.showFPS = fpsToggle.isOn;
+                    viewController.SetActive(true);
+
+
+                }
+                else
+                {
+                    statusText.text = $"All three views can't be 0 seconds";
+                    statusText.color = Color.red;
                 }
 
-                viewController.SetActive(true);
+
             }
             else
             {
-                statusText.text = $"Invalid ID. Please enter a number between 0 and {availableDevices.Length - 1}";
+                statusText.text = $"Invalid Webcam ID. Please enter a number between 0 and {availableDevices.Length - 1}";
                 statusText.color = Color.red;
             }
         }

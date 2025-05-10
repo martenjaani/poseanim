@@ -282,7 +282,7 @@ public class PoseDetection : MonoBehaviour
             // Update the performance text
             if (performanceText != null)
             {
-                performanceText.text = string.Format("FPS: {0:F1}\nInference: {1:F1}ms",
+                performanceText.text = string.Format("FPS: {0:F1}\nDelay: {1:F1}ms",
                     currentFps, lastInferenceTime);
             }
         }

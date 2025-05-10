@@ -41,6 +41,7 @@ public class ViewController : MonoBehaviour
     private void activateView2()
     {
         segmentationRenderer.dontUseInPaint = false;
+        poseDetection.avatarAvailable = false;
         Debug.Log("View 2 activated");
     }
 
@@ -48,6 +49,7 @@ public class ViewController : MonoBehaviour
     private void activateView3()
     {
         poseDetection.avatarAvailable = true;
+        segmentationRenderer.dontUseInPaint = false;
         Debug.Log("View 3 activated");
     }
 
@@ -115,18 +117,42 @@ public class ViewController : MonoBehaviour
     {
         while (true)
         {
-            // Important: Apply the view immediately when starting the cycle
+            // Skip views with zero duration
+            if (GetCurrentViewTime() <= 0)
+            {
+                viewMode = (viewMode + 1) % 3;
+                previousViewMode = viewMode;
+                continue;  // Skip to next iteration without waiting
+            }
+
+            // Apply the view immediately
             ApplyViewMode();
 
-            // Get current linger time based on current view
-            float currentLingerTime = GetCurrentViewTime();
+            // Wait for the appropriate time
+            yield return new WaitForSeconds(GetCurrentViewTime());
 
-            // Wait for the appropriate time for the current view
-            yield return new WaitForSeconds(currentLingerTime);
+            // Find next valid view mode
+            int nextView = (viewMode + 1) % 3;
+            while (GetViewTime(nextView) <= 0)
+            {
+                nextView = (nextView + 1) % 3;
 
-            // Move to next view mode
-            viewMode = (viewMode + 1) % 3;
+            }
+
+            viewMode = nextView;
             previousViewMode = viewMode;
+        }
+    }
+
+    // Helper to get time for a specific view
+    private float GetViewTime(int viewIndex)
+    {
+        switch (viewIndex)
+        {
+            case 0: return view1Time;
+            case 1: return view2Time;
+            case 2: return view3Time;
+            default: return 0f;
         }
     }
 
@@ -135,13 +161,13 @@ public class ViewController : MonoBehaviour
         switch (viewMode)
         {
             case 0:
-                return Mathf.Clamp(0,99,view1Time);
+                return view1Time;
             case 1:
-                return Mathf.Clamp(0, 99, view2Time);
+                return view2Time;
             case 2:
-                return Mathf.Clamp(0, 99, view3Time);
+                return view3Time;
             default:
-                return Mathf.Clamp(0, 99, view1Time);
+                return view1Time;
         }
     }
 
