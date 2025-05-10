@@ -31,7 +31,7 @@ The avatar used is [Unity-Chan!](https://assetstore.unity.com/packages/3d/charac
 
 ### Workflow
 
-The human movement is transferred to the Avatar by calculating directional vectors between the keypoints and applying them to the appropriate Avatar joints. The approach used here was inspired by the [ThreeDPoseUnityBarracuda](https://github.com/digital-standard/ThreeDPoseUnityBarracuda) project:
+The human movement is transferred to the Avatar by calculating directional vectors between the keypoints and applying them to the appropriate Avatar joints. The approach used here was inspired by the [ThreeDPoseUnityBarracuda](https://github.com/digital-standard/ThreeDPoseUnityBarracuda) project.
 
 
 The human is removed by storing the background information (areas not covered by the human segmentation) and using it to inpaint the human segmentation.
