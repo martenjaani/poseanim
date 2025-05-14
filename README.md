@@ -3,6 +3,11 @@
 This application detects a human in webcam feed, and in real-time removes it and replaces it with a 3D avatar. It can also cycle between views of just the segmentation, keypoints, or avatar replacement.
 
 ![demotestvid](https://github.com/user-attachments/assets/395a5d8f-77de-4b36-8cfe-ebbeb9938527) <br>
+
+
+https://github.com/user-attachments/assets/070c4950-e992-4f2d-a3d5-5631822742cf
+
+
 ![image](https://github.com/user-attachments/assets/f6b3e08a-21c7-4a46-baba-61ddeab284ff)
 
 ## How to use
