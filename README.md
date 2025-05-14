@@ -27,6 +27,7 @@ https://drive.google.com/file/d/1lwLKUbnxKREkhIyDyJaCF-oiW6g6NFKk/view?usp=shari
 
 Extract the zip folder, then run PoseAnim.exe
 
+Linux build does not exist currently. A Linux build was tested at an earlier point, but there were issues with the shaders not working properly, most likely due to using OpenGL, as opposed to DirectX. 
 
 ## Outline
 
