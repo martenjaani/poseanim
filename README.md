@@ -5,7 +5,9 @@ This application detects a human in webcam feed, and in real-time removes it and
 ![demotestvid](https://github.com/user-attachments/assets/395a5d8f-77de-4b36-8cfe-ebbeb9938527) <br>
 
 
-https://github.com/user-attachments/assets/070c4950-e992-4f2d-a3d5-5631822742cf
+
+https://github.com/user-attachments/assets/6f316641-242e-421f-8642-dcc70086c7d7
+
 
 
 ![image](https://github.com/user-attachments/assets/f6b3e08a-21c7-4a46-baba-61ddeab284ff)
