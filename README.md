@@ -29,12 +29,17 @@ Unity Sentis is used to run [MediaPipe Pose Landmarker](https://ai.google.dev/ed
 
 The avatar used is [Unity-Chan!](https://assetstore.unity.com/packages/3d/characters/unity-chan-model-18705)
 
-### Workflow
+## Source code and workflow
 
-The human movement is transferred to the Avatar by calculating directional vectors between the keypoints and applying them to the appropriate Avatar joints. The approach used here was inspired by the [ThreeDPoseUnityBarracuda](https://github.com/digital-standard/ThreeDPoseUnityBarracuda) project.
+The main scripts responsible for the workflow are as follows: 
+- ```Assets/PoseDetection/Scripts/PoseDetection.cs```: Handles the running of the pose detection model. This is heavily modified from [sentis-blaze-pose](https://huggingface.co/unity/sentis-blaze-pose) to work continuously in real-time and apply Kalman and [1€ Filters](https://gery.casiez.net/1euro/), also takes the output of the segmentation, and transforms it into the image space.
+- ```Assets/Scripts/AvatarController.cs```: Handles the transfer of detected keypoints into avatar movement, using a forward kinematic approach. The avatar is animated by calculating directional vectors between the keypoints and using them to find the rotations that turn the joints so they match the directional vectors. The forward kinematics approach used here was inspired by the [ThreeDPoseUnityBarracuda](https://github.com/digital-standard/ThreeDPoseUnityBarracuda) project.
+- ```Assets/Scripts/SegmentationRenderer.cs```: Handles the processing of the human segmentation. Responsible for removing the human from output. The human is removed by storing the background information (areas not covered by the human segmentation) and using it to inpaint the human segmentation.
+- ```Assets/Scripts/ViewController.cs```:  Cycles between views of just the segmentation, keypoints, or avatar replacement.
 
 
-The human is removed by storing the background information (areas not covered by the human segmentation) and using it to inpaint the human segmentation.
+
+
 
 
 
