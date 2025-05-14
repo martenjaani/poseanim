@@ -42,6 +42,8 @@ The main scripts responsible for the workflow are as follows:
 
 
 Also, ```Assets/Scripts/HandAvatarController.cs``` and ```Assets/HandDetection``` were used at a point also to animate the fingers of the avatar. This solution used a modified [sentis-blaze-hand](https://huggingface.co/unity/sentis-blaze-hand) project, which itself uses [Google Mediapipe's Hand Landmarker task](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker). The feature was left out since it did not work reliably in situations where the human was more than 2 meters away and hands were not clearly visible and facing the camera. Also, the existing code only worked for the [Mixamo avatar](https://www.mixamo.com/#/?page=3&type=Character), as seen in the video, and did not work for Unity-Chan!, due to different rigging. 
+
+
 ![ezgif-5caebe0b301be1](https://github.com/user-attachments/assets/4040762c-7f17-457d-80b6-463f2ceedbbf)
 
 
