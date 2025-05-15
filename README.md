@@ -14,20 +14,23 @@ https://github.com/user-attachments/assets/6f316641-242e-421f-8642-dcc70086c7d7
 
 ## How to use
 
-Requires a webcam and a GPU.
-
-The project has been tested on Nvidia GeForce RTX 2070 and RTX 3060 Ti, and achieves a performance of about 60FPS and a delay of 30ms. It has only been tested on Windows operating system.
-
-Works best when the Webcam has any kind of auto configuration disabled, like exposure and focus. This can be achieved through feeding the webcam through OBS Virtual Camera, disabling the features, and selecting the Virtual Camera as input when running the application.
-
-### Link to the build
-
 Link to the Windows build: <br>
 https://drive.google.com/file/d/1lwLKUbnxKREkhIyDyJaCF-oiW6g6NFKk/view?usp=sharing
 
 Extract the zip folder, then run PoseAnim.exe
 
 Linux build does not exist currently. A Linux build was tested at an earlier point, but there were issues with the shaders not working properly, most likely due to using OpenGL, as opposed to DirectX. 
+
+Requires a webcam and a GPU.
+
+The project has been tested on Nvidia GeForce RTX 2070 and RTX 3060 Ti, and achieves a performance of about 60FPS and a delay of 30ms. It has only been tested on Windows operating system.
+
+The human removal works most seamlessly when the Webcam has any kind of auto configuration disabled, like exposure and focus. This can be achieved by feeding the webcam through the OBS Virtual Camera, disabling the features, and selecting the Virtual Camera as input when running the application. This allows for the background pixels to remain relatively the same, allowing for better quality inpainting.
+
+For best results, the human should stay about 2-5 meters from the camera, so that the human is completely in frame. If the segmentation mask doesn't fill (i.e, you see your ghost), then moving side to side helps. The system needs to capture background information. Only one person should stay in the frame. The system doesn't work for multiple people.
+
+
+
 
 ## Outline
 
