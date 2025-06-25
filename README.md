@@ -16,6 +16,9 @@ https://github.com/user-attachments/assets/6f316641-242e-421f-8642-dcc70086c7d7
 
 Link to the Windows build: <br>
 https://drive.google.com/file/d/1lwLKUbnxKREkhIyDyJaCF-oiW6g6NFKk/view?usp=sharing
+ <br>
+Link to the Windows build (vertical/portrait mode): <br>
+https://drive.google.com/file/d/1ZMJA-zg2q4WX3jhqVp9LZ-iAaP4gubTa/view?usp=sharing
 
 Extract the zip folder, then run PoseAnim.exe
 
