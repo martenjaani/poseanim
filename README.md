@@ -5,7 +5,7 @@ This application detects a human in webcam feed, and in real-time removes it and
 - Make sure only one person is in frame at a time
 - Stay about 1 to 4 meters from the camera
 
-This was made as a Computer Science Bsc Thesis project<>
+This was made as a Computer Science Bsc Thesis project <br>
 https://register.cs.ut.ee/thesis/af290743-2b0e-422e-a4b4-0bd773f5c7d0
 
 ### Contact
