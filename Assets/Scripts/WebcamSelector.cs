@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,6 +56,9 @@ public class WebcamSelector : MonoBehaviour
 
         // Set up button listener
         confirmButton.onClick.AddListener(ConfirmWebcamSelection);
+
+        // Auto-select default after 2 seconds
+        StartCoroutine(AutoSelectDefaultWebcamAfterDelay());
     }
 
     private void DisplayAvailableWebcams()
@@ -150,6 +154,16 @@ public class WebcamSelector : MonoBehaviour
         {
             statusText.text = "Please enter a valid number";
             statusText.color = Color.red;
+        }
+    }
+
+    private IEnumerator AutoSelectDefaultWebcamAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(2f);  // Use WaitForSecondsRealtime because Time.timeScale is 0
+        if (!selectionConfirmed && availableDevices.Length > 0)
+        {
+            webcamIdInput.text = "1";  // Default to webcam ID 0
+            ConfirmWebcamSelection();
         }
     }
 
