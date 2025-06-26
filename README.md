@@ -2,6 +2,17 @@
 
 This application detects a human in webcam feed, and in real-time removes it and replaces it with a 3D avatar. It can also cycle between views of just the segmentation, keypoints, or avatar replacement.
 
+- Make sure only one person is in frame at a time
+- Stay about 1 to 4 meters from the camera
+
+This was made as a Computer Science Bsc Thesis project<>
+https://register.cs.ut.ee/thesis/af290743-2b0e-422e-a4b4-0bd773f5c7d0
+
+### Contact
+Marten Mathias Jaani<br>
+marten.jaani@gmail.com
+
+
 ![demotestvid](https://github.com/user-attachments/assets/395a5d8f-77de-4b36-8cfe-ebbeb9938527) <br>
 
 
